@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบจัดการสต็อกเสื้อผ้า | ระบบบริหารชุดยูนิฟอร์ม</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Noto Sans Thai & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS (XLSX) Library for Exporting Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SweetAlert2 CDN for modern confirmation dialogs -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            background-color: #fdfaf6; /* พื้นหลังสีครีมนวลอบอุ่นตามธีม */
+            color: #2c1810;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-responsive::-webkit-scrollbar-thumb {
+            background-color: #d9c2b0;
+            border-radius: 4px;
+        }
+        .portal-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f0e6dc;
+            background: #ffffff;
+        }
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(227, 27, 27, 0.08);
+            border-color: #ffad7c;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-[#ffad7c] selection:text-white">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-[#2c1810]/30 backdrop-blur-xs hidden items-center justify-center z-50">
+        <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-[#f5eadf]">
+            <div class="w-6 h-6 border-4 border-[#3b7a1e] border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-sm font-medium text-[#2c1810]">กำลังซิงค์ข้อมูลกับระบบ...</span>
+        </div>
+    </div>
+
+    <!-- Top Navbar with Link back to Index Dashboard -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-[#f5eadf] sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <a href="index.html" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#e31b1b] to-[#ffad7c] text-white flex items-center justify-center shadow-md text-xl hover:opacity-90 transition cursor-pointer" title="กลับหน้าหลัก Dashboard">
+                    <i class="fa-solid fa-home"></i>
+                </a>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-[#2c1810] tracking-tight">ระบบจัดการสต็อกเสื้อผ้า</h1>
+                    <p class="text-xs text-[#8c7365] font-normal">Clothing Inventory Management System</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== SCREEN 1: FOLDER MANAGEMENT ==================== -->
+    <div id="folderScreen" class="flex-grow flex flex-col max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-10 w-full space-y-6">
+        <!-- Folder Header / Control Bar -->
+        <div class="bg-white p-6 rounded-3xl shadow-xs border border-[#f0e6dc] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-[#2c1810] flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-[#fef2f2] text-[#e31b1b] flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-folder-tree text-lg"></i>
+                    </div>
+                    <span>รายการโฟลเดอร์งานสต็อก</span>
+                </h2>
+                <p class="text-xs sm:text-sm text-[#735c50] mt-1">จัดการและแบ่งหมวดหมู่สต็อกเสื้อผ้าตามโครงการหรืองานของคุณ</p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button onclick="openFolderModal()" class="bg-[#e31b1b] hover:bg-[#c21414] text-white px-5 py-3 rounded-2xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-[#e31b1b]/20 cursor-pointer flex-shrink-0">
+                    <i class="fa-solid fa-folder-plus text-sm"></i>
+                    <span>สร้างโฟลเดอร์ใหม่</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Folder Main Content -->
+        <div class="space-y-6">
+            <!-- Search Bar -->
+            <div class="bg-white p-4 rounded-2xl shadow-xs border border-[#f0e6dc] flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs sm:text-sm text-[#735c50] font-medium">
+                    โฟลเดอร์งานทั้งหมดในระบบ
+                </div>
+                <div class="relative w-full sm:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-[#8c7365] text-sm"></i>
+                    <input type="text" id="folderSearchInput" oninput="renderFolders()" placeholder="ค้นหาชื่อ หรือประเภทชุด..." class="w-full pl-10 pr-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                </div>
+            </div>
+
+            <!-- Folders Grid -->
+            <div id="foldersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic Folder Cards Inserted Here -->
+            </div>
+
+            <!-- Folders Empty State -->
+            <div id="foldersEmptyState" class="hidden bg-white rounded-3xl border border-[#f0e6dc] p-12 text-center max-w-lg mx-auto shadow-xs">
+                <div class="w-16 h-16 bg-[#fef2f2] text-[#e31b1b] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h3 class="text-base sm:text-lg font-bold text-[#2c1810] mb-1">ยังไม่มีโฟลเดอร์งาน</h3>
+                <p class="text-xs sm:text-sm text-[#735c50] mb-6">สร้างโฟลเดอร์ใหม่เพื่อเริ่มจัดเก็บและบันทึกประวัติสต็อกเสื้อผ้า</p>
+                <button onclick="openFolderModal()" class="bg-[#e31b1b] hover:bg-[#c21414] text-white px-6 py-3 rounded-2xl font-medium text-xs sm:text-sm transition-all shadow-md inline-flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-folder-plus"></i>
+                    <span>สร้างโฟลเดอร์แรกของคุณ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN 2: INVENTORY LOG IN FOLDER ==================== -->
+    <div id="inventoryScreen" class="flex-grow flex flex-col max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-10 w-full space-y-6 hidden">
+        <!-- Header / Navbar with Folder Navigation -->
+        <div class="bg-white p-6 rounded-3xl shadow-xs border border-[#f0e6dc] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="flex items-center gap-3.5 min-w-0">
+                <button onclick="exitFolder()" class="p-2.5 rounded-xl bg-[#fdfaf6] hover:bg-[#f5eadf] transition text-[#735c50] cursor-pointer flex-shrink-0 border border-[#f0e6dc]" title="เปลี่ยนโฟลเดอร์">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-folder text-[#ffad7c] text-lg"></i>
+                        <h2 id="activeFolderName" class="text-lg sm:text-2xl font-bold text-[#2c1810] truncate">ชื่อโฟลเดอร์งาน</h2>
+                    </div>
+                    <p class="text-xs text-[#8c7365] mt-0.5">ระบบจัดการสต็อกเสื้อผ้าในโฟลเดอร์นี้</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 w-full lg:w-auto">
+                <button onclick="exportCombinedExcel()" class="flex-1 lg:flex-none bg-[#3b7a1e] hover:bg-[#2d5f17] text-white font-medium px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-xs text-xs sm:text-sm">
+                    <i class="fa-solid fa-file-excel text-sm"></i> ส่งออก Excel
+                </button>
+
+                <button onclick="openTransactionModal('IN')" class="flex-1 lg:flex-none bg-[#e31b1b] hover:bg-[#c21414] text-white font-medium px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-xs text-xs sm:text-sm">
+                    <i class="fa-solid fa-right-to-bracket text-sm"></i> รับเข้า / เบิกออก
+                </button>
+            </div>
+        </div>
+
+        <!-- Inventory Content Container -->
+        <div class="space-y-6">
+
+            <!-- Real-time Size Summary Dashboard -->
+            <div class="bg-white p-5 rounded-3xl border border-[#f0e6dc] shadow-xs space-y-3">
+                <div class="flex items-center justify-between border-b border-[#f5eadf] pb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-[#e31b1b] text-sm"></i>
+                        <h3 class="text-xs sm:text-sm font-bold text-[#2c1810]">ยอดคงเหลือแยกตามไซส์</h3>
+                    </div>
+                    <span class="text-xs text-[#8c7365]">ภาพรวมสต็อกทั้งหมด</span>
+                </div>
+                <div id="sizeDashboardContainer" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11 gap-2">
+                    <!-- Size cards dynamically generated here -->
+                </div>
+            </div>
+
+            <!-- View Navigation Tabs & Filters -->
+            <div class="bg-white p-4 rounded-3xl border border-[#f0e6dc] shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f5eadf] pb-4">
+                    <div class="flex space-x-1 bg-[#fdfaf6] p-1.5 rounded-2xl border border-[#f0e6dc]">
+                        <button id="tabLogsBtn" onclick="switchTab('logs')" class="flex-1 sm:flex-none px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all bg-[#e31b1b] text-white shadow-xs">
+                            <i class="fa-solid fa-clock-rotate-left mr-1.5"></i> ประวัติรายการ
+                        </button>
+                        <button id="tabSummaryBtn" onclick="switchTab('summary')" class="flex-1 sm:flex-none px-4 py-2 text-xs sm:text-sm font-medium rounded-xl transition-all text-[#735c50] hover:text-[#2c1810]">
+                            <i class="fa-solid fa-boxes-stacked mr-1.5"></i> สรุปสต็อก
+                        </button>
+                    </div>
+
+                    <div class="relative w-full sm:w-96">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-[#8c7365] text-sm"></i>
+                        <input type="text" id="searchInput" oninput="renderCurrentView()" placeholder="ค้นหาผู้เบิก, หมายเหตุ..." class="w-full pl-10 pr-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div id="dateFilterWrapper" class="relative flex items-center">
+                        <i class="fa-solid fa-calendar-days absolute left-3.5 text-[#8c7365] text-xs pointer-events-none"></i>
+                        <input type="date" id="filterDate" onchange="renderCurrentView()" title="กรองตามวันที่ทำรายการ" class="bg-[#fdfaf6] border border-[#f0e6dc] text-[#2c1810] text-xs sm:text-sm rounded-xl pl-9 pr-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffad7c]">
+                    </div>
+
+                    <select id="filterSize" onchange="renderCurrentView()" class="bg-[#fdfaf6] border border-[#f0e6dc] text-[#2c1810] text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffad7c]">
+                        <option value="">ทุกไซส์</option>
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="2XL">2XL</option>
+                        <option value="3XL">3XL</option>
+                        <option value="4XL">4XL</option>
+                        <option value="5XL">5XL</option>
+                        <option value="6XL">6XL</option>
+                        <option value="7XL">7XL</option>
+                    </select>
+
+                    <select id="filterType" onchange="renderCurrentView()" class="bg-[#fdfaf6] border border-[#f0e6dc] text-[#2c1810] text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffad7c]">
+                        <option value="">ทุกประเภท</option>
+                        <option value="IN">รับเข้า (+)</option>
+                        <option value="OUT">เบิกออก (-)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- View 1: Stock Transactions Log Table -->
+            <div id="logsView" class="bg-white rounded-3xl border border-[#f0e6dc] shadow-xs overflow-hidden">
+                <div class="table-responsive overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr class="bg-[#fdfaf6] border-b border-[#f5eadf] text-xs font-bold text-[#735c50] uppercase tracking-wider">
+                                <th class="py-4 px-5">วันที่-เวลา</th>
+                                <th class="py-4 px-5 text-center">ประเภท</th>
+                                <th class="py-4 px-5">ชื่องาน</th>
+                                <th class="py-4 px-5">ประเภทชุด</th>
+                                <th class="py-4 px-5">คุณสมบัติชุด</th>
+                                <th class="py-4 px-5 text-center">ไซส์</th>
+                                <th class="py-4 px-5 text-center">จำนวน</th>
+                                <th class="py-4 px-5 text-center bg-[#fdfaf6]">ยอดก่อนทำ</th>
+                                <th class="py-4 px-5 text-center bg-[#ffefcb]/40 text-[#8c5200]">ยอดคงเหลือ</th>
+                                <th class="py-4 px-5">ผู้ทำรายการ / หมายเหตุ</th>
+                                <th class="py-4 px-5 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody" class="divide-y divide-[#f5eadf] text-xs sm:text-sm text-[#2c1810]">
+                            <!-- Data rows dynamically inserted -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="logsEmptyState" class="hidden py-12 text-center">
+                    <div class="w-16 h-16 bg-[#fef2f2] text-[#e31b1b] rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-semibold text-[#2c1810]">ไม่พบประวัติรายการในโฟลเดอร์นี้</h3>
+                    <p class="text-xs text-[#8c7365] mt-1">กดปุ่ม "รับเข้า / เบิกออก" เพื่อเริ่มเพิ่มประวัติใหม่</p>
+                </div>
+            </div>
+
+            <!-- View 2: Current Inventory Summary Table -->
+            <div id="summaryView" class="hidden bg-white rounded-3xl border border-[#f0e6dc] shadow-xs overflow-hidden">
+                <div class="table-responsive overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="bg-[#fdfaf6] border-b border-[#f5eadf] text-xs font-bold text-[#735c50] uppercase tracking-wider">
+                                <th class="py-4 px-5">ชื่องาน (โฟลเดอร์)</th>
+                                <th class="py-4 px-5">ประเภทชุด</th>
+                                <th class="py-4 px-5">คุณสมบัติชุด</th>
+                                <th class="py-4 px-5 text-center">ไซส์</th>
+                                <th class="py-4 px-5 text-center">ยอดคงเหลือรวม</th>
+                                <th class="py-4 px-5 text-center">ทำรายการด่วน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-[#f5eadf] text-xs sm:text-sm text-[#2c1810]">
+                            <!-- Summary rows dynamically inserted -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="summaryEmptyState" class="hidden py-12 text-center">
+                    <div class="w-16 h-16 bg-[#fef2f2] text-[#e31b1b] rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-semibold text-[#2c1810]">ไม่พบข้อมูลสต็อกคงเหลือในโฟลเดอร์นี้</h3>
+                    <p class="text-xs text-[#8c7365] mt-1">รายการสต็อกจะถูกคำนวณสะสมตามประวัติการรับเข้าและเบิกออก</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 border-t border-[#f5eadf] py-6 text-center text-xs text-[#8c7365] mt-auto">
+        <p>ระบบจัดการสต็อกเสื้อผ้า &copy; 2026</p>
+    </footer>
+
+    <!-- Folder Add/Edit Modal -->
+    <div id="folderModal" class="fixed inset-0 bg-[#2c1810]/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-[#f0e6dc] w-full max-w-md overflow-hidden transform transition-all my-auto p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-[#f5eadf] pb-3">
+                <h3 id="folderModalTitle" class="text-base sm:text-lg font-bold text-[#2c1810]">สร้างโฟลเดอร์งานใหม่</h3>
+                <button onclick="closeFolderModal()" class="text-[#8c7365] hover:text-[#2c1810] w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#fdfaf6] transition-all">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="folderForm" onsubmit="handleFolderFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="folderId">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">ชื่อโฟลเดอร์งาน <span class="text-[#e31b1b]">*</span></label>
+                    <input type="text" id="folderNameInput" required placeholder="เช่น โครงการ ปตท. 2026" class="w-full px-4 py-3 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none text-[#2c1810]">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">ประเภทชุด (ประจำโฟลเดอร์) <span class="text-[#e31b1b]">*</span></label>
+                    <input type="text" id="folderCategoryInput" required placeholder="เช่น ชุดยูนิฟอร์มช่าง, เสื้อโปโล" class="w-full px-4 py-3 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none text-[#2c1810]">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">คุณสมบัติชุด (ประจำโฟลเดอร์) <span class="text-[#e31b1b]">*</span></label>
+                    <input type="text" id="folderSkuInput" required placeholder="เช่น แขนยาว, Cotton 100%" class="w-full px-4 py-3 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none text-[#2c1810]">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">รายละเอียดโฟลเดอร์ (ถ้ามี)</label>
+                    <textarea id="folderDescInput" rows="2" placeholder="รายละเอียดหรือหมายเหตุย่อ..." class="w-full px-4 py-3 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none resize-none text-[#2c1810]"></textarea>
+                </div>
+                <div class="pt-2 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeFolderModal()" class="px-4 py-2.5 border border-[#f0e6dc] hover:bg-[#fdfaf6] rounded-xl text-xs sm:text-sm font-medium text-[#735c50] transition-all cursor-pointer">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white rounded-xl text-xs sm:text-sm font-medium transition-all shadow-md cursor-pointer">บันทึกโฟลเดอร์</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 bg-[#2c1810]/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-[#f0e6dc] w-full max-w-lg overflow-hidden transform transition-all my-auto p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-[#f5eadf] pb-3">
+                <h3 id="modalTitle" class="text-base sm:text-lg font-bold text-[#2c1810]">บันทึกรายการ เข้า-ออก สต็อก</h3>
+                <button onclick="closeModal()" class="text-[#8c7365] hover:text-[#2c1810] w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#fdfaf6] transition-all">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="transactionForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="transId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-[#735c50] mb-1.5">ประเภทรายการ <span class="text-[#e31b1b]">*</span></label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center justify-center p-3 border-2 rounded-2xl cursor-pointer transition-all border-[#3b7a1e] bg-[#f2fbec] text-[#3b7a1e] font-semibold text-xs sm:text-sm" id="labelTypeIn">
+                            <input type="radio" name="transType" value="IN" checked onchange="onTypeChange()" class="sr-only">
+                            <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center rotate-45 mr-1.5"></i>
+                            <span>รับเข้า (+)</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 border-2 border-[#f0e6dc] rounded-2xl cursor-pointer transition-all text-[#735c50] font-medium text-xs sm:text-sm" id="labelTypeOut">
+                            <input type="radio" name="transType" value="OUT" onchange="onTypeChange()" class="sr-only">
+                            <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i>
+                            <span>เบิกออก (-)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-[#735c50]">ชื่องาน (โฟลเดอร์) <span class="text-[#e31b1b]">*</span></label>
+                        <input type="text" id="itemName" required readonly class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm text-[#735c50] cursor-not-allowed font-medium focus:outline-none">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-[#735c50]">ประเภทชุด <span class="text-[#e31b1b]">*</span></label>
+                        <input type="text" id="itemCategory" required readonly class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm text-[#735c50] cursor-not-allowed font-medium focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">คุณสมบัติชุด</label>
+                    <input type="text" id="itemSku" readonly class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm text-[#735c50] cursor-not-allowed focus:outline-none">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">ไซส์ (Size) <span class="text-[#e31b1b]">*</span></label>
+                    <select id="itemSize" required onchange="updateStockAvailabilityIndicator()" class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none text-[#2c1810]">
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="2XL">2XL</option>
+                        <option value="3XL">3XL</option>
+                        <option value="4XL">4XL</option>
+                        <option value="5XL">5XL</option>
+                        <option value="6XL">6XL</option>
+                        <option value="7XL">7XL</option>
+                    </select>
+                </div>
+
+                <div id="stockInfoBadge" class="hidden bg-[#f2fbec] border border-[#a2f275]/40 rounded-2xl p-3 flex items-center justify-between text-xs text-[#3b7a1e] font-semibold">
+                    <span><i class="fa-solid fa-boxes-stacked mr-1"></i> คงเหลือไซส์นี้:</span>
+                    <span id="stockInfoValue" class="text-sm font-bold">0 ชิ้น</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-[#735c50]">จำนวนชิ้น <span class="text-[#e31b1b]">*</span></label>
+                        <input type="number" id="itemQuantity" min="1" required placeholder="1" class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none text-[#2c1810]">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-[#735c50]">ผู้ทำรายการ / ผู้เบิก <span class="text-[#e31b1b]">*</span></label>
+                        <input type="text" id="itemOperator" required placeholder="ชื่อผู้ทำรายการ" class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none text-[#2c1810]">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#735c50]">หมายเหตุ / รหัสใบงาน</label>
+                    <textarea id="itemNote" rows="2" placeholder="เลขใบงาน, หมายเหตุ..." class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-[#ffad7c] focus:outline-none resize-none text-[#2c1810]"></textarea>
+                </div>
+
+                <div class="pt-3 border-t border-[#f5eadf] flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 border border-[#f0e6dc] hover:bg-[#fdfaf6] rounded-xl text-xs sm:text-sm font-medium text-[#735c50] transition-all cursor-pointer">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white rounded-xl text-xs sm:text-sm font-medium transition-all shadow-md cursor-pointer">บันทึกรายการ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-[#2c1810] text-white px-5 py-3 rounded-2xl shadow-xl border border-[#4a2e23] flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none text-xs sm:text-sm">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-[#83e645] text-base"></i>
+        <span id="toastMessage" class="font-medium">ทำรายการสำเร็จ</span>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxCzTnemmrZg9-rnVOzYJxH0xkbvpiLeHmy_CYo_Gklz0yhKPUa-l0QoY8FUUVNv2wzpw/exec";
+        
+        let folders = [];
+        let activeFolderId = null;
+        let transactions = [];
+        let currentActiveTab = 'logs';
+        const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'];
+
+        let autoRefreshTimer = null;
+        let isSyncing = false;
+
+        // ฟังก์ชันแปลงวันที่-เวลาให้อ่านง่าย (รูปแบบ DD/MM/BBBB HH:mm) และดึงค่า timestamp สำหรับเรียงลำดับ/กรอง
+        function parseDateInfo(rawTs) {
+            if (!rawTs) return { display: '-', dateKey: '', sortTime: 0 };
+            const str = rawTs.toString().trim();
+            
+            let d = null;
+            if (str.includes('T') || str.endsWith('Z')) {
+                const parsed = new Date(str);
+                if (!isNaN(parsed.getTime())) d = parsed;
+            }
+            
+            if (!d) {
+                const m = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+                if (m) {
+                    const y = parseInt(m[1], 10);
+                    const mo = parseInt(m[2], 10) - 1;
+                    const da = parseInt(m[3], 10);
+                    const hr = m[4] ? parseInt(m[4], 10) : 0;
+                    const mi = m[5] ? parseInt(m[5], 10) : 0;
+                    const se = m[6] ? parseInt(m[6], 10) : 0;
+                    d = new Date(y, mo, da, hr, mi, se);
+                } else {
+                    const fallback = new Date(str);
+                    if (!isNaN(fallback.getTime())) d = fallback;
+                }
+            }
+
+            if (d && !isNaN(d.getTime())) {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const hh = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                const thaiYear = yyyy < 2400 ? yyyy + 543 : yyyy;
+                return {
+                    display: `${dd}/${mm}/${thaiYear} ${hh}:${min}`,
+                    dateKey: `${yyyy}-${mm}-${dd}`,
+                    sortTime: d.getTime()
+                };
+            }
+            return { display: str, dateKey: str.slice(0, 10), sortTime: 0 };
+        }
+
+        function sortTransactionsLatestFirst(list) {
+            return [...(list || [])].sort((a, b) => {
+                const timeA = parseDateInfo(a.timestamp).sortTime;
+                const timeB = parseDateInfo(b.timestamp).sortTime;
+                if (timeB !== timeA) return timeB - timeA;
+                const idA = parseInt((a.id || '').replace(/\D/g, ''), 10) || 0;
+                const idB = parseInt((b.id || '').replace(/\D/g, ''), 10) || 0;
+                return idB - idA;
+            });
+        }
+
+        function showLoading(show) {
+            const loader = document.getElementById('loading-overlay');
+            if (show) {
+                loader.classList.remove('hidden');
+                loader.classList.add('flex');
+            } else {
+                loader.classList.remove('flex');
+                loader.classList.add('hidden');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocal();
+            fetchAllData();
+            startAutoRefresh();
+        });
+
+        function startAutoRefresh() {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(() => {
+                fetchBackgroundData();
+            }, 8000); 
+        }
+
+        async function fetchBackgroundData() {
+            if (isSyncing) return;
+            try {
+                const response = await fetch(API_URL + '?t=' + Date.now());
+                const result = await response.json();
+                if (result.status === 'success' && result.folders && !isSyncing) {
+                    const cloudFolders = result.folders || [];
+                    const cloudTx = result.transactions || [];
+                    
+                    cloudFolders.forEach(cf => {
+                        cf.transactions = sortTransactionsLatestFirst(cloudTx.filter(t => t.folder_id === cf.id));
+                    });
+
+                    const newDataString = JSON.stringify(cloudFolders);
+                    const oldDataString = localStorage.getItem('clothing_stock_folders_v27');
+
+                    if (newDataString !== oldDataString) {
+                        folders = cloudFolders;
+                        localStorage.setItem('clothing_stock_folders_v27', newDataString);
+                        
+                        if (activeFolderId) {
+                            const activeFolder = folders.find(f => f.id === activeFolderId);
+                            if (activeFolder) {
+                                transactions = activeFolder.transactions || [];
+                                renderCurrentView();
+                            } else {
+                                exitFolder();
+                            }
+                        } else {
+                            renderFolders();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Background sync error:", error);
+            }
+        }
+
+        function loadFromLocal() {
+            const stored = localStorage.getItem('clothing_stock_folders_v27');
+            if (stored) {
+                try {
+                    folders = JSON.parse(stored);
+                    folders.forEach(f => {
+                        f.transactions = sortTransactionsLatestFirst(f.transactions || []);
+                    });
+                    renderFolders();
+                } catch (e) { folders = []; }
+            }
+        }
+
+        async function fetchAllData() {
+            showLoading(true);
+            try {
+                const response = await fetch(API_URL + '?t=' + Date.now());
+                const result = await response.json();
+                if (result.status === 'success' && result.folders) {
+                    const cloudFolders = result.folders || [];
+                    const cloudTx = result.transactions || [];
+                    
+                    cloudFolders.forEach(cf => {
+                        cf.transactions = sortTransactionsLatestFirst(cloudTx.filter(t => t.folder_id === cf.id));
+                    });
+
+                    folders = cloudFolders;
+                    localStorage.setItem('clothing_stock_folders_v27', JSON.stringify(folders));
+                    renderFolders();
+
+                    if (activeFolderId) {
+                        const activeFolder = folders.find(f => f.id === activeFolderId);
+                        if (activeFolder) {
+                            transactions = activeFolder.transactions || [];
+                            renderCurrentView();
+                        } else {
+                            exitFolder();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Fetch data error:", error);
+            }
+            showLoading(false);
+        }
+
+        async function syncToCloudInstant(actionPayload) {
+            isSyncing = true;
+            localStorage.setItem('clothing_stock_folders_v27', JSON.stringify(folders));
+
+            try {
+                const queryString = Object.keys(actionPayload).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(actionPayload[key])).join('&');
+                const beaconUrl = `${API_URL}?${queryString}&action=${encodeURIComponent(actionPayload.action)}&t=${Date.now()}`;
+                
+                await fetch(beaconUrl, { method: 'GET', mode: 'no-cors' });
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (err) {
+                console.error("Sync error:", err);
+            }
+            isSyncing = false;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+            if (type === 'warning' || type === 'error') {
+                toastIcon.className = 'fa-solid fa-triangle-exclamation text-[#ffad7c] text-base';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-[#83e645] text-base';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // ==================== FOLDER MANAGEMENT ====================
+        function renderFolders() {
+            const grid = document.getElementById('foldersGrid');
+            const emptyState = document.getElementById('foldersEmptyState');
+            const search = (document.getElementById('folderSearchInput').value || '').trim().toLowerCase();
+
+            const filteredFolders = folders.filter(f => 
+                f.name.toLowerCase().includes(search) || 
+                (f.category && f.category.toLowerCase().includes(search)) ||
+                (f.sku && f.sku.toLowerCase().includes(search)) ||
+                (f.description && f.description.toLowerCase().includes(search))
+            );
+
+            if (filteredFolders.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filteredFolders.map(folder => {
+                let totalIn = 0;
+                let totalOut = 0;
+                (folder.transactions || []).forEach(t => {
+                    const q = parseInt(t.quantity, 10) || 0;
+                    if (t.type === 'IN') totalIn += q;
+                    if (t.type === 'OUT') totalOut += q;
+                });
+                const totalStock = totalIn - totalOut;
+                const logCount = (folder.transactions || []).length;
+
+                return `
+                    <div class="portal-card rounded-3xl p-6 flex flex-col justify-between group relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-2.5 h-full bg-[#e31b1b]"></div>
+                        <div class="space-y-4">
+                            <div class="flex items-start justify-between">
+                                <div class="w-12 h-12 bg-[#fff4ec] text-[#d96b2b] rounded-2xl flex items-center justify-center text-xl group-hover:scale-105 transition-transform flex-shrink-0 shadow-xs">
+                                    <i class="fa-solid fa-folder"></i>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <button onclick="openFolderModal('${folder.id}')" class="p-2 text-[#8c7365] hover:text-[#d96b2b] hover:bg-[#fff4ec] rounded-xl transition-all cursor-pointer" title="แก้ไข">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="deleteFolder('${folder.id}')" class="p-2 text-[#8c7365] hover:text-[#e31b1b] hover:bg-[#fef2f2] rounded-xl transition-all cursor-pointer" title="ลบ">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-[#2c1810] text-base sm:text-lg group-hover:text-[#d96b2b] transition-colors leading-snug truncate mb-1.5">${escapeHtml(folder.name)}</h3>
+                                <div class="flex flex-wrap gap-1.5 mb-2.5">
+                                    <span class="inline-flex items-center bg-[#fff4ec] text-[#d96b2b] font-medium px-2.5 py-1 rounded-lg text-xs border border-[#ffad7c]/30"><i class="fa-solid fa-shirt mr-1 text-[10px]"></i>${escapeHtml(folder.category)}</span>
+                                    <span class="inline-flex items-center bg-[#fdfaf6] text-[#735c50] px-2.5 py-1 rounded-lg text-xs border border-[#f0e6dc]"><i class="fa-solid fa-tag mr-1 text-[10px]"></i>${escapeHtml(folder.sku)}</span>
+                                </div>
+                                <p class="text-xs text-[#735c50] line-clamp-2">${folder.description ? escapeHtml(folder.description) : 'ไม่มีรายละเอียด'}</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-5 mt-5 border-t border-[#f5eadf] space-y-4">
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="bg-[#fdfaf6] p-3 rounded-2xl border border-[#f0e6dc]">
+                                    <span class="text-[#8c7365] block mb-0.5 text-[10px]">คงเหลือรวม</span>
+                                    <span class="text-xs sm:text-sm font-bold text-[#e31b1b]">${totalStock.toLocaleString()} ชิ้น</span>
+                                </div>
+                                <div class="bg-[#fdfaf6] p-3 rounded-2xl border border-[#f0e6dc]">
+                                    <span class="text-[#8c7365] block mb-0.5 text-[10px]">รายการ</span>
+                                    <span class="text-xs sm:text-sm font-bold text-[#2c1810]">${logCount.toLocaleString()} รายการ</span>
+                                </div>
+                            </div>
+
+                            <button onclick="openFolder('${folder.id}')" class="w-full bg-[#2c1810] hover:bg-[#e31b1b] text-white py-3 rounded-2xl text-xs sm:text-sm font-medium transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                                <span>เข้าสู่สต็อก</span>
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openFolderModal(id = null) {
+            const modal = document.getElementById('folderModal');
+            const form = document.getElementById('folderForm');
+            const title = document.getElementById('folderModalTitle');
+
+            form.reset();
+            document.getElementById('folderId').value = '';
+
+            if (id) {
+                const folder = folders.find(f => f.id === id);
+                if (folder) {
+                    title.textContent = 'แก้ไขโฟลเดอร์งาน';
+                    document.getElementById('folderId').value = folder.id;
+                    document.getElementById('folderNameInput').value = folder.name;
+                    document.getElementById('folderCategoryInput').value = folder.category || '';
+                    document.getElementById('folderSkuInput').value = folder.sku || '';
+                    document.getElementById('folderDescInput').value = folder.description || '';
+                }
+            } else {
+                title.textContent = 'สร้างโฟลเดอร์งานใหม่';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeFolderModal() {
+            document.getElementById('folderModal').classList.add('hidden');
+        }
+
+        async function handleFolderFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('folderId').value;
+            const name = document.getElementById('folderNameInput').value.trim();
+            const category = document.getElementById('folderCategoryInput').value.trim();
+            const sku = document.getElementById('folderSkuInput').value.trim();
+            const description = document.getElementById('folderDescInput').value.trim();
+
+            if (!name || !category || !sku) {
+                showToast('กรุณากรอกข้อมูลให้ครบทุกช่องที่จำเป็น', 'warning');
+                return;
+            }
+
+            const now = new Date();
+            const updatedAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            let folderObj;
+            if (id) {
+                folderObj = folders.find(f => f.id === id);
+                if (folderObj) {
+                    folderObj.name = name;
+                    folderObj.category = category;
+                    folderObj.sku = sku;
+                    folderObj.description = description;
+                    folderObj.updatedAt = updatedAt;
+                }
+            } else {
+                folderObj = {
+                    id: 'folder-' + Date.now(),
+                    name,
+                    category,
+                    sku,
+                    description,
+                    updatedAt,
+                    transactions: []
+                };
+                folders.push(folderObj);
+            }
+
+            closeFolderModal();
+            renderFolders();
+            showToast(id ? 'อัปเดตโฟลเดอร์เรียบร้อย' : 'สร้างโฟลเดอร์สำเร็จ');
+
+            await syncToCloudInstant({
+                action: 'saveFolder',
+                folder_id: folderObj.id,
+                folder_name: folderObj.name,
+                category: folderObj.category,
+                property: folderObj.sku,
+                description: folderObj.description,
+                updated_at: folderObj.updatedAt
+            });
+        }
+
+        function deleteFolder(id) {
+            const folder = folders.find(f => f.id === id);
+            if (!folder) return;
+
+            Swal.fire({
+                title: 'ยืนยันการลบโฟลเดอร์?',
+                html: `ต้องการลบโฟลเดอร์ <b>"${escapeHtml(folder.name)}"</b> ใช่หรือไม่?<br><span class="text-xs text-rose-500">ข้อมูลประวัติและสต็อกทั้งหมดในโฟลเดอร์นี้จะถูกลบ</span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e31b1b',
+                cancelButtonColor: '#8c7365',
+                confirmButtonText: 'ใช่, ลบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    folders = folders.filter(f => f.id !== id);
+                    renderFolders();
+                    showToast('ลบโฟลเดอร์เรียบร้อย');
+
+                    await syncToCloudInstant({
+                        action: 'deleteFolder',
+                        folder_id: id
+                    });
+                }
+            });
+        }
+
+        function openFolder(id) {
+            const folder = folders.find(f => f.id === id);
+            if (!folder) return;
+
+            activeFolderId = id;
+            transactions = sortTransactionsLatestFirst(folder.transactions || []);
+            folder.transactions = transactions;
+
+            document.getElementById('activeFolderName').textContent = folder.name;
+            document.getElementById('folderScreen').classList.add('hidden');
+            document.getElementById('inventoryScreen').classList.remove('hidden');
+
+            renderCurrentView();
+        }
+
+        function exitFolder() {
+            activeFolderId = null;
+            transactions = [];
+            document.getElementById('inventoryScreen').classList.add('hidden');
+            document.getElementById('folderScreen').classList.remove('hidden');
+            renderFolders();
+        }
+
+        function switchTab(tab) {
+            currentActiveTab = tab;
+            const tabLogsBtn = document.getElementById('tabLogsBtn');
+            const tabSummaryBtn = document.getElementById('tabSummaryBtn');
+            const logsView = document.getElementById('logsView');
+            const summaryView = document.getElementById('summaryView');
+            const dateFilterWrapper = document.getElementById('dateFilterWrapper');
+
+            if (tab === 'logs') {
+                tabLogsBtn.className = "flex-1 sm:flex-none px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all bg-[#e31b1b] text-white shadow-xs";
+                tabSummaryBtn.className = "flex-1 sm:flex-none px-4 py-2 text-xs sm:text-sm font-medium rounded-xl transition-all text-[#735c50] hover:text-[#2c1810]";
+                logsView.classList.remove('hidden');
+                summaryView.classList.add('hidden');
+                if (dateFilterWrapper) dateFilterWrapper.classList.remove('hidden');
+            } else {
+                tabSummaryBtn.className = "flex-1 sm:flex-none px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all bg-[#e31b1b] text-white shadow-xs";
+                tabLogsBtn.className = "flex-1 sm:flex-none px-4 py-2 text-xs sm:text-sm font-medium rounded-xl transition-all text-[#735c50] hover:text-[#2c1810]";
+                summaryView.classList.remove('hidden');
+                logsView.classList.add('hidden');
+                if (dateFilterWrapper) dateFilterWrapper.classList.add('hidden');
+            }
+            renderCurrentView();
+        }
+
+        function onTypeChange() {
+            const transType = document.querySelector('input[name="transType"]:checked').value;
+            const labelIn = document.getElementById('labelTypeIn');
+            const labelOut = document.getElementById('labelTypeOut');
+
+            if (transType === 'IN') {
+                labelIn.className = "flex items-center justify-center p-3 border-2 rounded-2xl cursor-pointer transition-all border-[#3b7a1e] bg-[#f2fbec] text-[#3b7a1e] font-semibold text-xs sm:text-sm";
+                labelOut.className = "flex items-center justify-center p-3 border-2 border-[#f0e6dc] rounded-2xl cursor-pointer transition-all text-[#735c50] font-medium text-xs sm:text-sm";
+            } else {
+                labelOut.className = "flex items-center justify-center p-3 border-2 rounded-2xl cursor-pointer transition-all border-[#e31b1b] bg-[#fef2f2] text-[#e31b1b] font-semibold text-xs sm:text-sm";
+                labelIn.className = "flex items-center justify-center p-3 border-2 border-[#f0e6dc] rounded-2xl cursor-pointer transition-all text-[#735c50] font-medium text-xs sm:text-sm";
+            }
+
+            updateStockAvailabilityIndicator();
+        }
+
+        function getStockRemainingForSize(size) {
+            let totalIn = 0;
+            let totalOut = 0;
+            transactions.forEach(t => {
+                if (t.size === size) {
+                    const q = parseInt(t.quantity, 10) || 0;
+                    if (t.type === 'IN') totalIn += q;
+                    if (t.type === 'OUT') totalOut += q;
+                }
+            });
+            return totalIn - totalOut;
+        }
+
+        function updateStockAvailabilityIndicator() {
+            const size = document.getElementById('itemSize').value;
+            const badge = document.getElementById('stockInfoBadge');
+            const valSpan = document.getElementById('stockInfoValue');
+
+            if (size) {
+                const stock = getStockRemainingForSize(size);
+                valSpan.textContent = `${stock.toLocaleString()} ชิ้น`;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openTransactionModal(type = 'IN') {
+            const form = document.getElementById('transactionForm');
+            form.reset();
+            document.getElementById('transId').value = '';
+
+            if (activeFolderId) {
+                const currentFolder = folders.find(f => f.id === activeFolderId);
+                if (currentFolder) {
+                    document.getElementById('itemName').value = currentFolder.name || '';
+                    document.getElementById('itemCategory').value = currentFolder.category || '';
+                    document.getElementById('itemSku').value = currentFolder.sku || '';
+                }
+            }
+
+            const radios = document.getElementsByName('transType');
+            for (let radio of radios) {
+                if (radio.value === type) {
+                    radio.checked = true;
+                    break;
+                }
+            }
+            onTypeChange();
+            document.getElementById('modalTitle').textContent = type === 'IN' ? 'บันทึก รับเข้าสต็อก (+)' : 'บันทึก เบิกออกสต็อก (-)';
+            document.getElementById('transactionModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('transactionModal').classList.add('hidden');
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const transType = document.querySelector('input[name="transType"]:checked').value;
+            const name = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('itemCategory').value.trim();
+            const sku = document.getElementById('itemSku').value.trim();
+            const size = document.getElementById('itemSize').value;
+            const quantity = parseInt(document.getElementById('itemQuantity').value, 10) || 0;
+            const operator = document.getElementById('itemOperator').value.trim();
+            const note = document.getElementById('itemNote').value.trim();
+
+            if (!operator) {
+                showToast('กรุณาระบุชื่อผู้ทำรายการ', 'warning');
+                return;
+            }
+
+            if (quantity <= 0) {
+                showToast('กรุณาระบุจำนวนให้มากกว่า 0', 'warning');
+                return;
+            }
+
+            const currentStock = getStockRemainingForSize(size);
+
+            if (transType === 'OUT' && currentStock < quantity) {
+                Swal.fire({
+                    title: 'ไม่สามารถเบิกออกได้',
+                    text: `ไซส์ ${size} มีสินค้าเพียง ${currentStock} ชิ้น ไม่เพียงพอ`,
+                    icon: 'error',
+                    confirmButtonColor: '#e31b1b'
+                });
+                return;
+            }
+
+            const stockBefore = currentStock;
+            const stockAfter = transType === 'IN' ? currentStock + quantity : currentStock - quantity;
+
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const newTransaction = {
+                id: 'tx_' + Date.now(),
+                folder_id: activeFolderId,
+                timestamp,
+                type: transType,
+                name,
+                category,
+                sku,
+                size,
+                quantity,
+                operator,
+                note,
+                stockBefore,
+                stockAfter
+            };
+
+            transactions = sortTransactionsLatestFirst([newTransaction, ...transactions]);
+            const folder = folders.find(f => f.id === activeFolderId);
+            if (folder) folder.transactions = transactions;
+
+            closeModal();
+            renderCurrentView();
+            showToast(transType === 'IN' ? 'บันทึกรับเข้าเรียบร้อย' : 'บันทึกเบิกออกเรียบร้อย');
+
+            await syncToCloudInstant({
+                action: 'saveTransaction',
+                transaction_id: newTransaction.id,
+                folder_id: newTransaction.folder_id,
+                timestamp: newTransaction.timestamp,
+                type: newTransaction.type,
+                job_name: newTransaction.name,
+                category: newTransaction.category,
+                property: newTransaction.sku,
+                size: newTransaction.size,
+                qty: newTransaction.quantity,
+                stock_before: newTransaction.stockBefore,
+                stock_after: newTransaction.stockAfter,
+                operator: newTransaction.operator,
+                remark: newTransaction.note
+            });
+        }
+
+        function deleteTransaction(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบรายการ?',
+                text: "การลบจะมีผลต่อการคำนวณยอดสต็อกคงเหลือ",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e31b1b',
+                cancelButtonColor: '#8c7365',
+                confirmButtonText: 'ใช่, ลบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    transactions = sortTransactionsLatestFirst(transactions.filter(t => t.id !== id));
+                    const folder = folders.find(f => f.id === activeFolderId);
+                    if (folder) folder.transactions = transactions;
+
+                    renderCurrentView();
+                    showToast('ลบรายการเรียบร้อย');
+
+                    await syncToCloudInstant({
+                        action: 'deleteTransaction',
+                        transaction_id: id
+                    });
+                }
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('filterDate').value = '';
+            document.getElementById('filterSize').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('searchInput').value = '';
+            renderCurrentView();
+        }
+
+        function renderSizeDashboard() {
+            const container = document.getElementById('sizeDashboardContainer');
+            container.innerHTML = ALL_SIZES.map(size => {
+                const count = getStockRemainingForSize(size);
+                const isAvailable = count > 0;
+                
+                return `
+                    <div class="p-2.5 rounded-2xl border text-center transition-all ${isAvailable ? 'bg-[#fff4ec] border-[#ffad7c]/40 text-[#2c1810] shadow-xs' : 'bg-[#fdfaf6] border-[#f0e6dc] text-[#8c7365] opacity-60'}">
+                        <span class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#735c50] mb-0.5">${size}</span>
+                        <span class="text-xs sm:text-base font-bold ${isAvailable ? 'text-[#d96b2b]' : 'text-[#8c7365]'}">${count.toLocaleString()}</span>
+                        <span class="text-[9px] text-[#8c7365] block">ชิ้น</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCurrentView() {
+            renderSizeDashboard();
+
+            if (currentActiveTab === 'logs') {
+                renderLogsTable();
+            } else {
+                renderSummaryTable();
+            }
+        }
+
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            const emptyState = document.getElementById('logsEmptyState');
+
+            const filterDate = document.getElementById('filterDate').value;
+            const filterSize = document.getElementById('filterSize').value;
+            const filterType = document.getElementById('filterType').value;
+            const search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+
+            const sortedTransactions = sortTransactionsLatestFirst(transactions);
+
+            const filteredLogs = sortedTransactions.filter(t => {
+                const dateInfo = parseDateInfo(t.timestamp);
+                const matchDate = !filterDate || dateInfo.dateKey === filterDate;
+                const matchSize = !filterSize || t.size === filterSize;
+                const matchType = !filterType || t.type === filterType;
+                const matchSearch = !search || 
+                    (t.operator && t.operator.toLowerCase().includes(search)) ||
+                    (t.note && t.note.toLowerCase().includes(search)) ||
+                    (t.name && t.name.toLowerCase().includes(search)) ||
+                    dateInfo.display.includes(search);
+                return matchDate && matchSize && matchType && matchSearch;
+            });
+
+            if (filteredLogs.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            tbody.innerHTML = filteredLogs.map(t => {
+                const isIN = t.type === 'IN';
+                const dateInfo = parseDateInfo(t.timestamp);
+                const typeBadge = isIN 
+                    ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#f2fbec] text-[#3b7a1e] border border-[#a2f275]/40"><i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center rotate-45 mr-1 text-[10px]"></i> รับเข้า(+)</span>` 
+                    : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#fef2f2] text-[#e31b1b] border border-[#fca5a5]/40"><i class="fa-solid fa-arrow-up-right-from-square mr-1 text-[10px]"></i> เบิก(-)</span>`;
+
+                return `
+                    <tr class="hover:bg-[#fdfaf6] transition-colors border-b border-[#f5eadf]">
+                        <td class="py-4 px-5 text-xs font-medium text-[#2c1810] whitespace-nowrap">
+                            <i class="fa-regular fa-clock text-[#8c7365] mr-1"></i>${escapeHtml(dateInfo.display)}
+                        </td>
+                        <td class="py-4 px-5 text-center whitespace-nowrap">${typeBadge}</td>
+                        <td class="py-4 px-5 font-bold text-[#2c1810] whitespace-nowrap">${escapeHtml(t.name)}</td>
+                        <td class="py-4 px-5 text-[#735c50] whitespace-nowrap">${escapeHtml(t.category)}</td>
+                        <td class="py-4 px-5 text-[#8c7365] text-xs whitespace-nowrap">${escapeHtml(t.sku || '-')}</td>
+                        <td class="py-4 px-5 text-center font-bold text-[#e31b1b] whitespace-nowrap">${escapeHtml(t.size)}</td>
+                        <td class="py-4 px-5 text-center font-bold whitespace-nowrap ${isIN ? 'text-[#3b7a1e]' : 'text-[#e31b1b]'}">
+                            ${isIN ? '+' : '-'}${t.quantity}
+                        </td>
+                        <td class="py-4 px-5 text-center font-medium text-[#735c50] bg-[#fdfaf6] whitespace-nowrap">${t.stockBefore !== undefined ? t.stockBefore : '-'}</td>
+                        <td class="py-4 px-5 text-center font-bold text-[#8c5200] bg-[#ffefcb]/20 whitespace-nowrap">${t.stockAfter !== undefined ? t.stockAfter : '-'}</td>
+                        <td class="py-4 px-5 text-xs">
+                            <div class="font-medium text-[#2c1810]">${escapeHtml(t.operator || '-')}</div>
+                            <div class="text-[#8c7365] truncate max-w-[180px]">${escapeHtml(t.note || '-')}</div>
+                        </td>
+                        <td class="py-4 px-5 text-center whitespace-nowrap">
+                            <button onclick="deleteTransaction('${t.id}')" class="p-2 text-[#8c7365] hover:text-[#e31b1b] hover:bg-[#fef2f2] rounded-xl transition-all cursor-pointer" title="ลบ">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSummaryTable() {
+            const tbody = document.getElementById('summaryTableBody');
+            const emptyState = document.getElementById('summaryEmptyState');
+
+            const currentFolder = folders.find(f => f.id === activeFolderId);
+            if (!currentFolder) return;
+
+            const filterSize = document.getElementById('filterSize').value;
+            const search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+
+            const sizesToDisplay = filterSize ? [filterSize] : ALL_SIZES;
+
+            const summaryList = sizesToDisplay.map(size => {
+                const totalStock = getStockRemainingForSize(size);
+                return {
+                    name: currentFolder.name,
+                    category: currentFolder.category,
+                    sku: currentFolder.sku,
+                    size,
+                    totalStock
+                };
+            }).filter(item => {
+                if (search) {
+                    return item.name.toLowerCase().includes(search) || 
+                           item.category.toLowerCase().includes(search) ||
+                           (item.sku && item.sku.toLowerCase().includes(search));
+                }
+                return true;
+            });
+
+            if (summaryList.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            tbody.innerHTML = summaryList.map(item => `
+                <tr class="hover:bg-[#fdfaf6] transition-colors border-b border-[#f5eadf]">
+                    <td class="py-4 px-5 font-bold text-[#2c1810]">${escapeHtml(item.name)}</td>
+                    <td class="py-4 px-5 text-[#735c50]">${escapeHtml(item.category)}</td>
+                    <td class="py-4 px-5 text-[#8c7365] text-xs">${escapeHtml(item.sku || '-')}</td>
+                    <td class="py-4 px-5 text-center font-bold text-[#e31b1b]">${item.size}</td>
+                    <td class="py-4 px-5 text-center font-bold ${item.totalStock > 0 ? 'text-[#2c1810]' : 'text-[#8c7365]'}">${item.totalStock.toLocaleString()} ชิ้น</td>
+                    <td class="py-4 px-5 text-center">
+                        <button onclick="openTransactionForSize('${item.size}')" class="bg-[#fff4ec] hover:bg-[#ffad7c] hover:text-white text-[#d96b2b] px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs">
+                            <i class="fa-solid fa-plus mr-1"></i> ทำรายการ
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openTransactionForSize(size) {
+            openTransactionModal('IN');
+            document.getElementById('itemSize').value = size;
+            updateStockAvailabilityIndicator();
+        }
+
+        function exportCombinedExcel() {
+            const currentFolder = folders.find(f => f.id === activeFolderId);
+            if (!currentFolder) return;
+
+            const wb = XLSX.utils.book_new();
+
+            const summaryData = ALL_SIZES.map((size, index) => ({
+                'ลำดับ': index + 1,
+                'ชื่องาน (โฟลเดอร์)': currentFolder.name,
+                'ประเภทชุด': currentFolder.category,
+                'คุณสมบัติชุด': currentFolder.sku || '-',
+                'ไซส์': size,
+                'ยอดคงเหลือรวม (ชิ้น)': getStockRemainingForSize(size)
+            }));
+
+            const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, wsSummary, 'สต็อกคงเหลือปัจจุบัน');
+
+            const sortedLogsForExport = sortTransactionsLatestFirst(currentFolder.transactions || []);
+            const logsData = sortedLogsForExport.map((t, index) => ({
+                'ลำดับ': index + 1,
+                'วันที่-เวลา': parseDateInfo(t.timestamp).display,
+                'ประเภทรายการ': t.type === 'IN' ? 'รับเข้า (+)' : 'เบิกออก (-)',
+                'ชื่องาน': t.name,
+                'ประเภทชุด': t.category,
+                'คุณสมบัติชุด': t.sku || '-',
+                'ไซส์': t.size,
+                'จำนวน (ชิ้น)': t.quantity,
+                'ยอดก่อนทำรายการ': t.stockBefore !== undefined ? t.stockBefore : '-',
+                'ยอดคงเหลือหลังทำรายการ': t.stockAfter !== undefined ? t.stockAfter : '-',
+                'ผู้ทำรายการ / ผู้เบิก': t.operator || '-',
+                'หมายเหตุ': t.note || '-'
+            }));
+
+            const wsLogs = XLSX.utils.json_to_sheet(logsData);
+            XLSX.utils.book_append_sheet(wb, wsLogs, 'ประวัติการเข้า-ออก');
+
+            const fileName = `รายงานสต็อก_${currentFolder.name.replace(/[^a-zA-Z0-9ก-๙]/g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showToast('ส่งออกไฟล์ Excel เรียบร้อยแล้ว');
+        }
+    </script>
+</body>
+</html>

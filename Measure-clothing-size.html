@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e31b1b">
+    <title>ระบบจัดการข้อมูลลูกค้า และขนาดเสื้อผ้า | ระบบบริหารชุดยูนิฟอร์ม</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Noto Sans Thai & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (XLSX) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body {
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            background-color: #fdfaf6;
+            color: #2c1810;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d9c2b0; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8c7365; }
+
+        input, select, button { font-size: 16px !important; }
+        @media (min-width: 640px) { input, select, button { font-size: 0.875rem !important; } }
+
+        #signaturePad, #modalSignaturePad {
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .portal-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f0e6dc;
+            background: #ffffff;
+        }
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(227, 27, 27, 0.08);
+            border-color: #ffad7c;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-[#ffad7c] selection:text-white">
+
+    <!-- Folder / Project Selection View (Landing Screen) -->
+    <div id="folderSelectionView" class="fixed inset-0 bg-[#fdfaf6] z-40 flex flex-col overflow-y-auto">
+        <header class="bg-white/90 backdrop-blur-md border-b border-[#f5eadf] sticky top-0 z-30 shadow-xs">
+            <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex justify-between items-center">
+                <div class="flex items-center space-x-3.5">
+                    <a href="index.html" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#e31b1b] to-[#ffad7c] text-white flex items-center justify-center shadow-md text-xl hover:opacity-90 transition cursor-pointer" title="กลับหน้าหลัก Dashboard">
+                        <i class="fa-solid fa-home"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-bold text-[#2c1810] tracking-tight">ระบบบันทึกไซส์เสื้อผ้า</h1>
+                        <p class="text-xs text-[#8c7365] font-normal">บัญชีผู้ใช้งาน: <span id="userBadgeFolderScreen" class="font-bold text-[#d96b2b]">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-5xl mx-auto px-4 py-8 sm:py-12 flex-grow w-full flex flex-col">
+            <div class="bg-white rounded-3xl shadow-xs border border-[#f0e6dc] p-6 sm:p-8 flex-grow flex flex-col">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-[#f5eadf]">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-[#2c1810] flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-xl bg-[#fef2f2] text-[#e31b1b] flex items-center justify-center text-lg shadow-xs">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                            โฟลเดอร์งานของคุณ
+                        </h2>
+                        <p class="text-xs sm:text-sm text-[#735c50] mt-1">โฟลเดอร์งานและข้อมูลทั้งหมดจะแสดงเฉพาะบัญชีของคุณเท่านั้น</p>
+                    </div>
+
+                    <form onsubmit="handleCreateFolder(event)" class="flex gap-2 shrink-0">
+                        <input type="text" id="newFolderName" required placeholder="ระบุชื่องาน / โครงการใหม่..."
+                            class="w-full sm:w-64 px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                        <button type="submit" class="bg-[#e31b1b] hover:bg-[#c21414] text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-[#e31b1b]/20 transition shrink-0 flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-folder-plus"></i> สร้างโฟลเดอร์
+                        </button>
+                    </form>
+                </div>
+
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-bold text-[#8c7365] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-folder-tree text-[#e31b1b]"></i> โฟลเดอร์งานทั้งหมด (<span id="folderCountText">0</span>)
+                    </h3>
+                    <div class="relative w-48 sm:w-64">
+                        <input type="text" id="searchFolderInput" oninput="renderFolderList()" placeholder="ค้นหาโฟลเดอร์งาน..."
+                            class="w-full pl-8 pr-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#8c7365] text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="flex-grow overflow-y-auto pr-1 -mr-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="folderListContainer"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Header / Navbar หลัก -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-[#f5eadf] sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex justify-between items-center">
+            <div class="flex items-center space-x-3.5">
+                <a href="index.html" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#e31b1b] to-[#ffad7c] text-white flex items-center justify-center shadow-md text-xl hover:opacity-90 transition cursor-pointer" title="กลับหน้าหลัก Dashboard">
+                    <i class="fa-solid fa-home"></i>
+                </a>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-[#2c1810] tracking-tight truncate max-w-[150px] sm:max-w-none" id="headerFolderTitle">ระบบบันทึกไซส์เสื้อผ้า</h1>
+                    <p class="text-xs text-[#8c7365] font-normal">บัญชีผู้ใช้งาน: <span id="userBadgeMainScreen" class="font-bold text-[#d96b2b]">-</span></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="backToFolderSelection()" class="bg-[#fdfaf6] hover:bg-[#f5eadf] text-[#735c50] border border-[#f0e6dc] px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer" title="เปลี่ยนโฟลเดอร์งาน">
+                    <i class="fa-solid fa-folder-tree text-[#e31b1b]"></i>
+                    <span class="hidden md:inline">เปลี่ยนงาน</span>
+                </button>
+
+                <button onclick="openGuideModal()" class="bg-[#fdfaf6] hover:bg-[#f5eadf] text-[#735c50] border border-[#f0e6dc] px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer" title="คู่มือการใช้งาน">
+                    <i class="fa-solid fa-circle-question text-[#ffad7c]"></i>
+                    <span class="hidden sm:inline">คู่มือ</span>
+                </button>
+
+                <button id="btnExportExcel" onclick="openExportModal()" class="bg-[#3b7a1e] hover:bg-[#2d5f17] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span class="font-semibold hidden sm:inline">ส่งออก</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full flex-grow space-y-6">
+        
+        <!-- Summary Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-3xl shadow-xs border border-[#f0e6dc] flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#fef2f2] text-[#e31b1b] flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-[#8c7365] font-medium">ลูกค้าทั้งหมดในงานนี้</p>
+                    <h3 id="statTotalCustomers" class="text-2xl font-extrabold text-[#2c1810]">0</h3>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-xs border border-[#f0e6dc] flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#fff4ec] text-[#d96b2b] flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-shirt"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-[#8c7365] font-medium">ไซส์เสื้อยอดนิยม</p>
+                    <h3 id="statPopularShirt" class="text-base sm:text-lg font-bold text-[#2c1810] truncate">-</h3>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-xs border border-[#f0e6dc] flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#f2fbec] text-[#3b7a1e] flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-person"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-[#8c7365] font-medium">ไซส์กางเกงยอดนิยม</p>
+                    <h3 id="statPopularPants" class="text-base sm:text-lg font-bold text-[#2c1810] truncate">-</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shirt Size Breakdown -->
+        <div class="bg-white p-5 rounded-3xl shadow-xs border border-[#f0e6dc]">
+            <h3 class="text-xs font-bold text-[#735c50] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-[#e31b1b]"></i> สรุปจำนวนเสื้อแยกตามไซส์ (XS - 7XL)
+            </h3>
+            <div id="sizeBreakdownContainer" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2"></div>
+        </div>
+
+        <!-- Pants Size Breakdown -->
+        <div class="bg-white p-5 rounded-3xl shadow-xs border border-[#f0e6dc]">
+            <h3 class="text-xs font-bold text-[#735c50] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-chart-bar text-[#3b7a1e]"></i> สรุปจำนวนกางเกงแยกตามไซส์ (XS - 7XL)
+            </h3>
+            <div id="pantsBreakdownContainer" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Side: Form Panel -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-3xl shadow-xs border border-[#f0e6dc] p-6 lg:sticky lg:top-28 space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-[#f5eadf]">
+                        <h2 id="formTitle" class="text-base sm:text-lg font-bold text-[#2c1810] flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus text-[#e31b1b]"></i> เพิ่มข้อมูลลูกค้าใหม่
+                        </h2>
+                        <button id="btnCancelEdit" type="button" onclick="resetForm()" class="hidden text-xs text-rose-500 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-xl transition">
+                            <i class="fa-solid fa-xmark mr-1"></i>ยกเลิก
+                        </button>
+                    </div>
+
+                    <form id="customerForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                        <input type="hidden" id="customerId" value="">
+
+                        <div>
+                            <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่องาน / โครงการ (โฟลเดอร์)</label>
+                            <input type="text" id="eventName" readonly
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] text-[#735c50] border border-[#f0e6dc] rounded-xl font-medium cursor-not-allowed">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-[#735c50] mb-1">
+                                ชื่อ-นามสกุล (ภาษาไทย) <span class="text-[#e31b1b]">*</span>
+                            </label>
+                            <input type="text" id="customerName" required placeholder="เช่น สมชาย ใจดี"
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-[#735c50] mb-1">
+                                ชื่อ-นามสกุล (ภาษาอังกฤษ) <span class="text-[#8c7365] font-normal text-[11px]">(ใส่หรือไม่ก็ได้)</span>
+                            </label>
+                            <input type="text" id="customerNameEn" placeholder="เช่น Somchai Jaidee"
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-[#735c50] mb-1">
+                                แผนก / ฝ่าย <span class="text-[#8c7365] font-normal text-[11px]">(ระบุหรือไม่ก็ได้)</span>
+                            </label>
+                            <input type="text" id="department" placeholder="เช่น ฝ่ายบุคคล, บัญชี, ตรวจการ"
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-[#735c50] mb-1">
+                                เบอร์โทรศัพท์ <span class="text-[#8c7365] font-normal text-[11px]">(ระบุหรือไม่ก็ได้)</span>
+                            </label>
+                            <input type="tel" id="customerPhone" placeholder="เช่น 081-234-5678"
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-[#735c50] mb-1">
+                                ประเภทชุด / ชื่อชุด <span class="text-[#e31b1b]">*</span>
+                            </label>
+                            <select id="outfitTypeSelect" required onchange="handleOutfitChange()"
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810] mb-2">
+                                <option value="">-- เลือกประเภทชุด --</option>
+                                <option value="BIG">BIG</option>
+                                <option value="อื่นๆ">อื่นๆ (พิมพ์ระบุเอง)</option>
+                            </select>
+                            <input type="text" id="outfitTypeOther" placeholder="กรุณาระบุประเภทชุด..." style="display: none;"
+                                class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            <input type="hidden" id="outfitType" value="">
+                        </div>
+
+                        <!-- BIG Section Options -->
+                        <div id="bigSectionContainer" class="space-y-3 hidden">
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-[#735c50]">เสื้อแจ็คเก็ต</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="col-span-2">
+                                        <select id="jacketSize" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                            <option value="">-- ไม่รับ --</option>
+                                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" id="jacketQty" min="1" value="1" class="w-full px-2 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                    </div>
+                                </div>
+                                <input type="text" id="jacketNotes" placeholder="หมายเหตุ" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-[#735c50]">เสื้อเชิ้ต</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="col-span-2">
+                                        <select id="shirtBigSize" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                            <option value="">-- ไม่รับ --</option>
+                                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" id="shirtBigQty" min="1" value="1" class="w-full px-2 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                    </div>
+                                </div>
+                                <input type="text" id="shirtBigNotes" placeholder="หมายเหตุ" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-[#735c50]">กางเกงสีกากี</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="col-span-2">
+                                        <select id="khakiPantsSize" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                            <option value="">-- ไม่รับ --</option>
+                                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" id="khakiPantsQty" min="1" value="1" class="w-full px-2 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                    </div>
+                                </div>
+                                <input type="text" id="khakiPantsNotes" placeholder="หมายเหตุ" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-[#735c50]">กางเกงสีกรม</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="col-span-2">
+                                        <select id="navyPantsSize" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                            <option value="">-- ไม่รับ --</option>
+                                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" id="navyPantsQty" min="1" value="1" class="w-full px-2 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                    </div>
+                                </div>
+                                <input type="text" id="navyPantsNotes" placeholder="หมายเหตุ" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            </div>
+                        </div>
+
+                        <!-- Standard Section -->
+                        <div id="standardSectionContainer" class="space-y-3">
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-[#735c50]">ข้อมูลเสื้อ</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="col-span-2">
+                                        <select id="shirtSize" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                            <option value="">-- ไม่รับเสื้อ --</option>
+                                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" id="shirtQty" min="1" value="1" class="w-full px-2 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                    </div>
+                                </div>
+                                <input type="text" id="shirtNotes" placeholder="หมายเหตุ" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-[#735c50]">ข้อมูลกางเกง</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="col-span-2">
+                                        <select id="pantsSize" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                            <option value="">-- ไม่รับกางเกง --</option>
+                                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" id="pantsQty" min="1" value="1" class="w-full px-2 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                                    </div>
+                                </div>
+                                <input type="text" id="pantsNotes" placeholder="หมายเหตุ" class="w-full px-3 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810]">
+                            </div>
+                        </div>
+
+                        <!-- Digital Signature Section -->
+                        <div class="p-4 bg-[#fdfaf6] border border-[#f0e6dc] rounded-2xl space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="block text-xs font-bold text-[#735c50] uppercase tracking-wide">
+                                    <i class="fa-solid fa-signature mr-1 text-[#e31b1b]"></i> ลายเซ็นลูกค้ายืนยัน <span class="text-[#e31b1b]">*</span>
+                                </label>
+                                <div class="space-x-2">
+                                    <button type="button" onclick="openSignatureModal()" class="text-[11px] text-[#d96b2b] hover:underline font-semibold cursor-pointer"><i class="fa-solid fa-expand mr-0.5"></i> ขยายจอเซ็น</button>
+                                    <button type="button" onclick="clearSignature()" class="text-[11px] text-rose-500 hover:underline font-medium cursor-pointer">ล้าง</button>
+                                </div>
+                            </div>
+                            <div class="border border-[#f0e6dc] rounded-2xl bg-white overflow-hidden shadow-inner relative cursor-pointer" onclick="openSignatureModal()" title="คลิกเพื่อเซ็นชื่อในจอใหญ่">
+                                <canvas id="signaturePad" width="300" height="120" class="w-full h-24 bg-white block pointer-events-none"></canvas>
+                                <div id="signaturePlaceholder" class="absolute inset-0 flex items-center justify-center text-[#8c7365] text-xs font-medium bg-[#fdfaf6]/60">
+                                    <i class="fa-solid fa-pen-nib mr-1.5 text-[#e31b1b]"></i> คลิกเพื่อเซ็นชื่อในจอใหญ่
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-1">
+                            <button type="submit" id="btnSubmit" class="w-full bg-[#e31b1b] hover:bg-[#c21414] text-white font-medium py-3 px-4 rounded-2xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Side: Data List & Filters -->
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-3xl shadow-xs border border-[#f0e6dc] p-6 space-y-4">
+                    
+                    <div class="flex flex-col gap-3">
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8c7365]">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <input type="text" id="searchInput" oninput="renderData()" placeholder="ค้นหาจากชื่อ (ไทย/อังกฤษ), แผนก, เบอร์โทร, ประเภทชุด..."
+                                class="w-full pl-10 pr-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-[#2c1810] text-xs sm:text-sm">
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 items-center">
+                            <select id="filterShirt" onchange="renderData()" class="bg-[#fdfaf6] border border-[#f0e6dc] text-[#2c1810] text-xs rounded-xl px-3 py-2.5 w-full sm:w-auto">
+                                <option value="">เสื้อ: ทุกไซส์</option>
+                                <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                            </select>
+
+                            <select id="filterPants" onchange="renderData()" class="bg-[#fdfaf6] border border-[#f0e6dc] text-[#2c1810] text-xs rounded-xl px-3 py-2.5 w-full sm:w-auto">
+                                <option value="">กางเกง: ทุกไซส์</option>
+                                <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option><option value="7XL">7XL</option><option value="สั่งตัดพิเศษ">สั่งตัดพิเศษ</option>
+                            </select>
+
+                            <button onclick="loadDemoData()" class="text-xs bg-[#fdfaf6] hover:bg-[#f5eadf] text-[#735c50] border border-[#f0e6dc] px-3.5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 font-medium shrink-0 cursor-pointer">
+                                <i class="fa-solid fa-lightbulb text-amber-500"></i> สุ่มตัวอย่าง
+                            </button>
+
+                            <button onclick="openClearAllModal()" class="text-xs bg-[#fef2f2] hover:bg-[#fee2e2] text-[#e31b1b] border border-[#fca5a5]/30 px-3.5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 font-medium shrink-0 cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i> ล้างทั้งหมดในงานนี้
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto table-responsive rounded-2xl border border-[#f0e6dc]">
+                        <table class="w-full text-left border-collapse min-w-[650px]">
+                            <thead>
+                                <tr class="bg-[#fdfaf6] border-b border-[#f5eadf] text-[#735c50] text-xs uppercase font-bold">
+                                    <th class="py-4 px-4">ลำดับ</th>
+                                    <th class="py-4 px-4">ชื่อ-นามสกุล / แผนก / เบอร์โทร</th>
+                                    <th class="py-4 px-4">ประเภทชุด</th>
+                                    <th class="py-4 px-4 text-center">เสื้อ (ไซส์ / จำนวน)</th>
+                                    <th class="py-4 px-4 text-center">กางเกง (ไซส์ / จำนวน)</th>
+                                    <th class="py-4 px-4 text-center">ลายเซ็น</th>
+                                    <th class="py-4 px-4 text-right">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerTableBody" class="divide-y divide-[#f5eadf] text-xs sm:text-sm text-[#2c1810]"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="emptyState" class="hidden py-12 text-center">
+                        <div class="w-16 h-16 bg-[#fef2f2] text-[#e31b1b] rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <h4 class="text-[#2c1810] font-bold text-sm">ยังไม่มีข้อมูลลูกค้าในโฟลเดอร์นี้</h4>
+                        <p class="text-[#8c7365] text-xs mt-1">สามารถเพิ่มข้อมูลผ่านฟอร์ม หรือกดปุ่ม "สุ่มตัวอย่าง"</p>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-[#8c7365] pt-1">
+                        <span id="dataCountText">แสดง 0 จาก 0 รายการ</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 border-t border-[#f5eadf] py-6 text-center text-xs text-[#8c7365] mt-auto">
+        <p>ระบบบันทึกไซส์เสื้อผ้า &copy; 2026</p>
+    </footer>
+
+    <!-- Modal สำหรับขยายจอเซ็นลายเซ็นแบบใหญ่พิเศษ -->
+    <div id="signatureModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 flex flex-col border border-[#f0e6dc]">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-[#f5eadf]">
+                <h3 class="text-base sm:text-lg font-bold text-[#2c1810] flex items-center gap-2">
+                    <i class="fa-solid fa-signature text-[#e31b1b]"></i> ลงลายเซ็นยืนยัน
+                </h3>
+                <button type="button" onclick="closeSignatureModal()" class="text-[#8c7365] hover:text-[#2c1810] text-xl p-1"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs sm:text-sm text-[#735c50] mb-3">กรุณาใช้นิ้วหรือปากกาเซ็นชื่อลงในกรอบด้านล่างนี้ให้เรียบร้อย</p>
+            
+            <div class="border-2 border-dashed border-[#ffad7c] rounded-2xl bg-[#fdfaf6] overflow-hidden shadow-inner relative mb-4">
+                <canvas id="modalSignaturePad" width="800" height="400" class="w-full h-72 sm:h-96 bg-white block touch-none"></canvas>
+                <div id="modalSignaturePlaceholder" class="absolute inset-0 flex items-center justify-center text-[#8c7365] text-sm font-medium pointer-events-none">
+                    พื้นที่สำหรับเซ็นชื่อ
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="clearModalSignature()" class="px-4 py-2.5 bg-[#fdfaf6] hover:bg-[#f5eadf] border border-[#f0e6dc] text-[#735c50] text-xs sm:text-sm font-semibold rounded-xl transition flex items-center gap-1 cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i> ล้างใหม่
+                </button>
+                <button type="button" onclick="closeSignatureModal()" class="flex-1 py-2.5 bg-[#fdfaf6] hover:bg-[#f5eadf] border border-[#f0e6dc] text-[#735c50] text-xs sm:text-sm font-semibold rounded-xl transition cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="button" onclick="saveModalSignature()" class="flex-1 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-check"></i> ตกลง / ใช้ลายเซ็นนี้
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ดูลายเซ็นขนาดใหญ่ -->
+    <div id="viewSignatureModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center border border-[#f0e6dc]">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-[#2c1810]">ลายเซ็นยืนยัน</h3>
+                <button onclick="closeViewSignatureModal()" class="text-[#8c7365] hover:text-[#2c1810] text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="border border-[#f0e6dc] rounded-2xl bg-[#fdfaf6] p-2 mb-4">
+                <img id="modalSignatureImg" src="" alt="Signature" class="w-full h-auto max-h-48 object-contain">
+            </div>
+            <button onclick="closeViewSignatureModal()" class="w-full py-2.5 bg-[#e31b1b] text-white text-xs font-semibold rounded-xl cursor-pointer">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <!-- Duplicate Confirm Modal -->
+    <div id="duplicateConfirmModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center border border-[#f0e6dc]">
+            <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-bold text-[#2c1810] mb-1">พบข้อมูลซ้ำในระบบ</h3>
+            <p id="duplicateConfirmText" class="text-xs text-[#735c50] mb-5 leading-relaxed"></p>
+            <div class="flex gap-2">
+                <button onclick="closeDuplicateModal()" class="flex-1 px-4 py-2.5 bg-[#fdfaf6] hover:bg-[#f5eadf] border border-[#f0e6dc] text-[#735c50] text-xs font-semibold rounded-xl cursor-pointer">ยกเลิก</button>
+                <button onclick="confirmSaveDuplicate()" class="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl shadow cursor-pointer">บันทึกซ้ำ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guide Modal -->
+    <div id="guideModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 flex flex-col max-h-[90vh] border border-[#f0e6dc]">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-[#f5eadf] shrink-0">
+                <h3 class="text-lg font-bold text-[#2c1810] flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-[#fff4ec] text-[#d96b2b] flex items-center justify-center text-base">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    คู่มือการใช้งานระบบ
+                </h3>
+                <button onclick="closeGuideModal()" class="text-[#8c7365] hover:text-[#2c1810] text-xl p-1"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="overflow-y-auto pr-2 space-y-3 text-xs sm:text-sm text-[#735c50] leading-relaxed">
+                <p>ระบบบันทึกข้อมูลเสื้อผ้า พร้อมระบบเซ็นลายเซ็นดิจิทัล โดยแยกจัดเก็บโฟลเดอร์งานและรายชื่อลูกค้าตามบัญชีผู้ใช้ที่เข้าสู่ระบบจากหน้าหลัก</p>
+            </div>
+            <div class="pt-4 border-t border-[#f5eadf] flex justify-end shrink-0 mt-4">
+                <button onclick="closeGuideModal()" class="px-6 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white text-xs font-semibold rounded-xl shadow transition cursor-pointer">เข้าใจแล้ว</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 border border-[#f0e6dc] space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-[#f5eadf]">
+                <div class="flex items-center gap-2 text-[#3b7a1e] font-bold"><i class="fa-solid fa-file-excel text-lg"></i><span>ส่งออกไฟล์ Excel</span></div>
+                <button onclick="closeExportModal()" class="text-[#8c7365] hover:text-[#2c1810] text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="confirmExportExcel(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่อไฟล์เอกสาร</label>
+                    <input type="text" id="exportFileName" required class="w-full px-3.5 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#3b7a1e] text-[#2c1810]">
+                </div>
+                <div class="flex gap-2 justify-end pt-2">
+                    <button type="button" onclick="closeExportModal()" class="px-4 py-2 bg-[#fdfaf6] border border-[#f0e6dc] text-[#735c50] text-xs font-semibold rounded-xl cursor-pointer">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-[#3b7a1e] text-white text-xs font-semibold rounded-xl shadow cursor-pointer">ดาวน์โหลด</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Single Modal -->
+    <div id="deleteSingleModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center border border-[#f0e6dc]">
+            <div class="w-14 h-14 bg-[#fef2f2] text-[#e31b1b] rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-user-xmark"></i>
+            </div>
+            <h3 class="text-base font-bold text-[#2c1810] mb-1">ยืนยันการลบข้อมูล</h3>
+            <p id="deleteSingleText" class="text-xs text-[#735c50] mb-5 leading-relaxed">ต้องการลบข้อมูลลูกค้ารายนี้ใช่หรือไม่?</p>
+            <div class="flex gap-2">
+                <button onclick="closeDeleteSingleModal()" class="flex-1 px-4 py-2.5 bg-[#fdfaf6] hover:bg-[#f5eadf] border border-[#f0e6dc] text-[#735c50] text-xs font-semibold rounded-xl cursor-pointer">ยกเลิก</button>
+                <button onclick="executeDeleteSingle()" class="flex-1 px-4 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer">ยืนยันลบ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Folder Modal -->
+    <div id="deleteFolderModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center border border-[#f0e6dc]">
+            <div class="w-14 h-14 bg-[#fef2f2] text-[#e31b1b] rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-folder-minus"></i>
+            </div>
+            <h3 class="text-base font-bold text-[#2c1810] mb-1">ยืนยันการลบโฟลเดอร์</h3>
+            <p id="deleteFolderText" class="text-xs text-[#735c50] mb-5 leading-relaxed">คุณต้องการลบโฟลเดอร์งานนี้และข้อมูลทั้งหมดข้างในใช่หรือไม่?</p>
+            <div class="flex gap-2">
+                <button onclick="closeDeleteFolderModal()" class="flex-1 px-4 py-2.5 bg-[#fdfaf6] hover:bg-[#f5eadf] border border-[#f0e6dc] text-[#735c50] text-xs font-semibold rounded-xl cursor-pointer">ยกเลิก</button>
+                <button onclick="executeDeleteFolder()" class="flex-1 px-4 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer">ยืนยันลบ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear All Modal -->
+    <div id="clearAllModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center border border-[#f0e6dc]">
+            <div class="w-14 h-14 bg-[#fef2f2] text-[#e31b1b] rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-bold text-[#2c1810] mb-1">ล้างข้อมูลทั้งหมดในงานนี้</h3>
+            <p class="text-xs text-[#735c50] mb-5 leading-relaxed">ข้อมูลลูกค้าทั้งหมดในโฟลเดอร์นี้จะถูกลบอย่างถาวร</p>
+            <div class="flex gap-2">
+                <button onclick="closeClearAllModal()" class="flex-1 px-4 py-2.5 bg-[#fdfaf6] hover:bg-[#f5eadf] border border-[#f0e6dc] text-[#735c50] text-xs font-semibold rounded-xl cursor-pointer">ยกเลิก</button>
+                <button onclick="executeClearAllData()" class="flex-1 px-4 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer">ยืนยันลบทั้งหมด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-[#2c1810] text-white px-5 py-3 rounded-2xl shadow-xl border border-[#4a2e23] flex items-center space-x-3 text-xs">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-[#83e645] text-base"></i>
+            <span id="toastMessage" class="font-medium">แจ้งเตือน</span>
+        </div>
+    </div>
+
+    <script>
+        const SHARED_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxATMv5Q5CbEDs8t0g5AcII1GDuNWPYu6BmH3DudFeGfuKACnn8lP7IzY1BUuh5YrN-MQ/exec';
+        const SHARED_SESSION_KEY = 'UNIFORM_SHARED_ACTIVE_USER_SESSION';
+        const SHARED_CUSTOMERS_DB_KEY = 'UNIFORM_SHARED_CUSTOMERS_DB_V1';
+
+        let currentUser = null;
+        let allCustomersDatabase = []; 
+        let customers = [];            
+        let currentFolder = null;
+        let pendingDeleteId = null;
+        let pendingDeleteFolder = null;
+        let pendingSaveData = null;
+        const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'สั่งตัดพิเศษ'];
+
+        let canvas, ctx, hasSignature = false;
+        let modalCanvas, modalCtx, modalHasSignature = false, isDrawing = false;
+        let currentSignatureData = '';
+
+        window.addEventListener('DOMContentLoaded', () => { 
+            const session = JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY) || localStorage.getItem(SHARED_SESSION_KEY) || 'null');
+            if (!session || !session.username) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = session;
+            document.getElementById('userBadgeFolderScreen').innerText = `${currentUser.fullname || currentUser.username} (${currentUser.username})`;
+            document.getElementById('userBadgeMainScreen').innerText = `${currentUser.fullname || currentUser.username} (${currentUser.username})`;
+
+            initSignaturePads();
+            initApp();
+        });
+
+        function getUserFolderSessionKey() {
+            return `ACTIVE_FOLDER_USER_${currentUser.username}`;
+        }
+
+        function normalizeCustomerRecord(rawItem) {
+            if (!rawItem || typeof rawItem !== 'object') return null;
+
+            const ownerUsername = String(
+                rawItem.ownerUsername || rawItem.Owner || rawItem.owner || ''
+            ).trim();
+
+            const eventName = String(
+                rawItem.eventName || rawItem['ชื่องาน/โครงการ'] || rawItem.folderName || rawItem.event || ''
+            ).trim();
+
+            const name = String(
+                rawItem.name || rawItem['ชื่อ-นามสกุล (ไทย)'] || rawItem.customerName || ''
+            ).trim();
+
+            const nameEn = String(
+                rawItem.nameEn || rawItem['ชื่อ-นามสกุล (อังกฤษ)'] || ''
+            ).trim();
+
+            const department = String(
+                rawItem.department || rawItem['แผนก/ฝ่าย'] || ''
+            ).trim();
+
+            const phone = String(
+                rawItem.phone || rawItem['เบอร์โทรศัพท์'] || ''
+            ).trim();
+
+            const outfit = String(
+                rawItem.outfit || rawItem['ประเภทชุด'] || ''
+            ).trim();
+
+            const shirt = String(
+                rawItem.shirt || rawItem['ไซส์เสื้อ'] || ''
+            ).trim();
+
+            const shirtQty = Number(rawItem.shirtQty ?? rawItem['จำนวนเสื้อ'] ?? 0) || 0;
+
+            const pants = String(
+                rawItem.pants || rawItem['ไซส์กางเกง'] || ''
+            ).trim();
+
+            const pantsQty = Number(rawItem.pantsQty ?? rawItem['จำนวนกางเกง'] ?? 0) || 0;
+
+            const rawSig = rawItem.signature || rawItem['ลายเซ็น (Base64)'] || rawItem.signatureBase64 || '';
+            const signature = typeof rawSig === 'string' && rawSig.startsWith('data:image') ? rawSig : '';
+
+            const updatedAt = rawItem.updatedAt || rawItem['อัปเดตล่าสุด'] || rawItem.createdAt || '';
+            const createdAt = rawItem.createdAt || updatedAt || '';
+            const id = String(rawItem.id || rawItem.ID || `CUST-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`).trim();
+
+            let bigDetails = rawItem.bigDetails || null;
+            if (typeof bigDetails === 'string' && bigDetails.trim().startsWith('{')) {
+                try { bigDetails = JSON.parse(bigDetails); } catch (e) { bigDetails = null; }
+            }
+
+            return {
+                ...rawItem,
+                id,
+                ownerUsername,
+                eventName,
+                name,
+                nameEn,
+                department,
+                phone,
+                outfit,
+                shirt,
+                shirtQty,
+                shirtNotes: rawItem.shirtNotes || '',
+                pants,
+                pantsQty,
+                pantsNotes: rawItem.pantsNotes || '',
+                bigDetails,
+                signature,
+                createdAt,
+                updatedAt
+            };
+        }
+
+        function initSignaturePads() {
+            canvas = document.getElementById('signaturePad');
+            if (canvas) {
+                ctx = canvas.getContext('2d');
+                ctx.strokeStyle = '#2c1810';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+            }
+
+            modalCanvas = document.getElementById('modalSignaturePad');
+            if (modalCanvas) {
+                modalCtx = modalCanvas.getContext('2d');
+                modalCtx.strokeStyle = '#2c1810';
+                modalCtx.lineWidth = 3;
+                modalCtx.lineCap = 'round';
+
+                setupCanvasEvents(modalCanvas, modalCtx, (hasDraw) => {
+                    modalHasSignature = hasDraw;
+                });
+            }
+        }
+
+        function setupCanvasEvents(cvs, context, onDrawCallback) {
+            const getPos = (e) => {
+                const rect = cvs.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                const scaleX = cvs.width / rect.width;
+                const scaleY = cvs.height / rect.height;
+                
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            };
+
+            const startDraw = (e) => {
+                isDrawing = true;
+                onDrawCallback(true);
+                const pos = getPos(e);
+                context.beginPath();
+                context.moveTo(pos.x, pos.y);
+                if (e.cancelable) e.preventDefault();
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                context.lineTo(pos.x, pos.y);
+                context.stroke();
+                if (e.cancelable) e.preventDefault();
+            };
+
+            const stopDraw = () => {
+                isDrawing = false;
+            };
+
+            cvs.addEventListener('mousedown', startDraw);
+            cvs.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDraw);
+
+            cvs.addEventListener('touchstart', startDraw, { passive: false });
+            cvs.addEventListener('touchmove', draw, { passive: false });
+            cvs.addEventListener('touchend', stopDraw);
+        }
+
+        function openSignatureModal() {
+            const modal = document.getElementById('signatureModal');
+            modal.classList.remove('hidden');
+            
+            setTimeout(() => {
+                modalCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+                if (currentSignatureData) {
+                    const img = new Image();
+                    img.onload = () => {
+                        modalCtx.drawImage(img, 0, 0, modalCanvas.width, modalCanvas.height);
+                        modalHasSignature = true;
+                        document.getElementById('modalSignaturePlaceholder').style.display = 'none';
+                    };
+                    img.src = currentSignatureData;
+                } else {
+                    modalHasSignature = false;
+                    document.getElementById('modalSignaturePlaceholder').style.display = 'flex';
+                }
+            }, 50);
+        }
+
+        function closeSignatureModal() {
+            document.getElementById('signatureModal').classList.add('hidden');
+        }
+
+        function clearModalSignature() {
+            modalCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+            modalHasSignature = false;
+            document.getElementById('modalSignaturePlaceholder').style.display = 'flex';
+        }
+
+        function saveModalSignature() {
+            if (!modalHasSignature) {
+                showToast("กรุณาเซ็นลายเซ็นก่อนบันทึก", "warning");
+                return;
+            }
+            currentSignatureData = modalCanvas.toDataURL('image/png');
+            hasSignature = true;
+
+            if (canvas && ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    document.getElementById('signaturePlaceholder').style.display = 'none';
+                };
+                img.src = currentSignatureData;
+            }
+
+            closeSignatureModal();
+            showToast("บันทึกลายเซ็นเรียบร้อย");
+        }
+
+        function clearSignature() {
+            currentSignatureData = '';
+            hasSignature = false;
+            if (canvas && ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            const placeholder = document.getElementById('signaturePlaceholder');
+            if (placeholder) placeholder.style.display = 'flex';
+        }
+
+        function getDevicePlatform() {
+            const ua = navigator.userAgent;
+            if (/Macintosh/i.test(ua) && navigator.maxTouchPoints && navigator.maxTouchPoints > 1) return "iPad (Tablet)";
+            if (/iPhone|iPod/i.test(ua)) return "iOS (iPhone)";
+            if (/iPad/i.test(ua)) return "iPad (Tablet)";
+            if (/Android/i.test(ua)) return /Mobile/i.test(ua) ? "Android (Mobile)" : "Android (Tablet)";
+            if (/Macintosh|MacIntel/i.test(ua)) return "MacBook / Mac";
+            if (/Windows|Win32|Win64/i.test(ua)) return "Windows (PC / Notebook)";
+            return "คอมพิวเตอร์ / อุปกรณ์อื่นๆ";
+        }
+
+        async function logActivity(action, detail) {
+            try {
+                fetch(SHARED_GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'logActivity', 
+                        user: currentUser.username, 
+                        action, 
+                        detail,
+                        platform: getDevicePlatform()
+                    })
+                }).catch(e => {});
+            } catch(e) {}
+        }
+
+        function initApp() {
+            loadFromSharedDatabase();
+            sessionStorage.removeItem(getUserFolderSessionKey());
+            showFolderSelection();
+        }
+
+        function showFolderSelection() {
+            loadFromSharedDatabase();
+            document.getElementById('folderSelectionView').classList.remove('hidden');
+            renderFolderList();
+        }
+
+        function renderFolderList() {
+            const container = document.getElementById('folderListContainer');
+            const searchKeyword = (document.getElementById('searchFolderInput')?.value || '').toLowerCase().trim();
+            let folders = [...new Set(customers.map(c => c.eventName))].filter(Boolean);
+
+            if (searchKeyword) {
+                folders = folders.filter(f => f.toLowerCase().includes(searchKeyword));
+            }
+
+            document.getElementById('folderCountText').innerText = folders.length;
+
+            if (folders.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-[#8c7365] text-xs sm:text-sm bg-[#fdfaf6] rounded-2xl border border-dashed border-[#f0e6dc] flex flex-col items-center justify-center gap-2">
+                        <i class="fa-solid fa-folder-open text-3xl text-[#d9c2b0]"></i>
+                        <span>${searchKeyword ? 'ไม่พบโฟลเดอร์งานที่ตรงกับคำค้นหา' : 'ยังไม่มีโฟลเดอร์งานในบัญชีของคุณ<br>พิมพ์ชื่อด้านบนเพื่อสร้างโฟลเดอร์แรกของคุณ'}</span>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = folders.map(folder => {
+                const count = customers.filter(c => c.eventName === folder).length;
+                return `
+                    <div class="portal-card rounded-3xl p-5 flex flex-col justify-between group">
+                        <div class="flex items-start justify-between gap-2 mb-4">
+                            <div class="flex items-center gap-3.5 cursor-pointer flex-grow" onclick="selectFolder('${escapeHtml(folder)}')">
+                                <div class="w-12 h-12 rounded-2xl bg-[#fff4ec] text-[#d96b2b] flex items-center justify-center text-xl shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                                    <i class="fa-solid fa-folder"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-[#2c1810] text-base truncate group-hover:text-[#d96b2b] transition-colors">${escapeHtml(folder)}</h4>
+                                    <p class="text-xs text-[#8c7365] flex items-center gap-1 mt-0.5"><i class="fa-solid fa-users text-[10px]"></i> ${count} รายการ</p>
+                                </div>
+                            </div>
+                            <button onclick="promptDeleteFolder('${escapeHtml(folder)}')" class="text-[#8c7365] hover:text-[#e31b1b] p-2 rounded-xl hover:bg-[#fef2f2] transition cursor-pointer" title="ลบโฟลเดอร์นี้">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
+                        <button onclick="selectFolder('${escapeHtml(folder)}')" class="w-full py-3 bg-[#2c1810] hover:bg-[#e31b1b] text-white text-xs sm:text-sm font-medium rounded-2xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                            <span>เปิดโฟลเดอร์งาน</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleCreateFolder(e) {
+            e.preventDefault();
+            const folderName = document.getElementById('newFolderName').value.trim();
+            if (!folderName) return;
+            selectFolder(folderName);
+        }
+
+        function selectFolder(folderName) {
+            currentFolder = folderName;
+            sessionStorage.setItem(getUserFolderSessionKey(), folderName);
+            document.getElementById('folderSelectionView').classList.add('hidden');
+            document.getElementById('headerFolderTitle').innerText = `งาน: ${currentFolder}`;
+            document.getElementById('eventName').value = currentFolder;
+            document.getElementById('newFolderName').value = '';
+            loadFromSharedDatabase();
+            renderData();
+            showToast(`เข้าสู่โฟลเดอร์งาน "${folderName}"`);
+        }
+
+        function backToFolderSelection() {
+            sessionStorage.removeItem(getUserFolderSessionKey());
+            currentFolder = null;
+            showFolderSelection();
+        }
+
+        function promptDeleteFolder(folderName) {
+            pendingDeleteFolder = folderName;
+            document.getElementById('deleteFolderText').innerHTML = `คุณต้องการลบโฟลเดอร์ <b>"${escapeHtml(folderName)}"</b> และข้อมูลทั้งหมดข้างในใช่หรือไม่?`;
+            document.getElementById('deleteFolderModal').classList.remove('hidden');
+        }
+
+        function closeDeleteFolderModal() {
+            pendingDeleteFolder = null;
+            document.getElementById('deleteFolderModal').classList.add('hidden');
+        }
+
+        async function executeDeleteFolder() {
+            if (!pendingDeleteFolder) return;
+            customers = customers.filter(c => c.eventName !== pendingDeleteFolder);
+            saveToSharedDatabase();
+            renderFolderList();
+            showToast(`ลบโฟลเดอร์ "${pendingDeleteFolder}" เรียบร้อยแล้ว`);
+            closeDeleteFolderModal();
+        }
+
+        function applyCustomersList(rawList) {
+            const normalized = (Array.isArray(rawList) ? rawList : [])
+                .map(normalizeCustomerRecord)
+                .filter(item => item && item.name);
+
+            allCustomersDatabase = normalized;
+            localStorage.setItem(SHARED_CUSTOMERS_DB_KEY, JSON.stringify(allCustomersDatabase));
+            customers = allCustomersDatabase.filter(item => item.ownerUsername === currentUser.username);
+
+            if (currentFolder) renderData();
+            else if (!document.getElementById('folderSelectionView').classList.contains('hidden')) renderFolderList();
+        }
+
+        function loadFromSharedDatabase() {
+            try {
+                const raw = localStorage.getItem(SHARED_CUSTOMERS_DB_KEY);
+                const cached = raw ? JSON.parse(raw) : [];
+                allCustomersDatabase = (Array.isArray(cached) ? cached : []).map(normalizeCustomerRecord).filter(Boolean);
+                customers = allCustomersDatabase.filter(item => item.ownerUsername === currentUser.username);
+
+                if (currentFolder) renderData();
+                else if (!document.getElementById('folderSelectionView').classList.contains('hidden')) renderFolderList();
+
+                const getUrl = `${SHARED_GAS_API_URL}?action=getCustomers&payload=${encodeURIComponent(JSON.stringify({ action: 'getCustomers' }))}`;
+                fetch(getUrl)
+                    .then(res => res.json())
+                    .then(result => {
+                        const list = result?.customers || result?.data || (Array.isArray(result) ? result : null);
+                        if (Array.isArray(list)) {
+                            applyCustomersList(list);
+                        }
+                    }).catch(e => {});
+            } catch(e) {
+                const raw = localStorage.getItem(SHARED_CUSTOMERS_DB_KEY);
+                const cached = raw ? JSON.parse(raw) : [];
+                allCustomersDatabase = (Array.isArray(cached) ? cached : []).map(normalizeCustomerRecord).filter(Boolean);
+                customers = allCustomersDatabase.filter(item => item.ownerUsername === currentUser.username);
+            }
+        }
+
+        function saveToSharedDatabase() {
+            try {
+                const otherUsersData = allCustomersDatabase.filter(item => item.ownerUsername !== currentUser.username);
+                const myTaggedData = customers.map(item => ({
+                    ...item,
+                    ownerUsername: currentUser.username
+                }));
+                allCustomersDatabase = [...myTaggedData, ...otherUsersData];
+
+                localStorage.setItem(SHARED_CUSTOMERS_DB_KEY, JSON.stringify(allCustomersDatabase));
+                if (currentFolder) {
+                    updateStats(customers.filter(item => item.eventName === currentFolder));
+                }
+
+                fetch(SHARED_GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveCustomers',
+                        customers: allCustomersDatabase,
+                        platform: getDevicePlatform()
+                    })
+                }).catch(e => {});
+            } catch(e) {
+                showToast("บันทึกไม่สำเร็จ", "warning");
+            }
+        }
+
+        function handleOutfitChange() {
+            const selectVal = document.getElementById('outfitTypeSelect').value;
+            const otherInput = document.getElementById('outfitTypeOther');
+            const bigContainer = document.getElementById('bigSectionContainer');
+            const standardContainer = document.getElementById('standardSectionContainer');
+
+            if (selectVal === 'BIG') {
+                otherInput.style.display = 'none';
+                otherInput.value = '';
+                document.getElementById('outfitType').value = 'BIG';
+                bigContainer.classList.remove('hidden');
+                standardContainer.classList.add('hidden');
+            } else if (selectVal === 'อื่นๆ') {
+                otherInput.style.display = 'block';
+                otherInput.focus();
+                document.getElementById('outfitType').value = '';
+                bigContainer.classList.add('hidden');
+                standardContainer.classList.remove('hidden');
+            } else {
+                otherInput.style.display = 'none';
+                otherInput.value = '';
+                document.getElementById('outfitType').value = selectVal;
+                bigContainer.classList.add('hidden');
+                standardContainer.classList.remove('hidden');
+            }
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('customerId').value;
+            const eventName = currentFolder;
+            const name = document.getElementById('customerName').value.trim();
+            const nameEn = document.getElementById('customerNameEn').value.trim();
+            const department = document.getElementById('department').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            
+            const selectVal = document.getElementById('outfitTypeSelect').value;
+            const outfit = selectVal === 'อื่นๆ' ? document.getElementById('outfitTypeOther').value.trim() : selectVal;
+
+            if (!name || !outfit) {
+                showToast("กรุณากรอกข้อมูล ชื่อ และเลือกประเภทชุด", "warning");
+                return;
+            }
+
+            if (!hasSignature && !id) {
+                showToast("กรุณาเซ็นลายเซ็นยืนยันก่อนบันทึก", "warning");
+                return;
+            }
+
+            let shirt = '', shirtQty = 0, shirtNotes = '';
+            let pants = '', pantsQty = 0, pantsNotes = '';
+            let bigDetails = null;
+
+            if (selectVal === 'BIG') {
+                const jacketSize = document.getElementById('jacketSize').value;
+                const jacketQty = jacketSize ? (parseInt(document.getElementById('jacketQty').value) || 1) : 0;
+                const jacketNotes = document.getElementById('jacketNotes').value.trim();
+
+                const shirtBigSize = document.getElementById('shirtBigSize').value;
+                const shirtBigQty = shirtBigSize ? (parseInt(document.getElementById('shirtBigQty').value) || 1) : 0;
+                const shirtBigNotes = document.getElementById('shirtBigNotes').value.trim();
+
+                const khakiPantsSize = document.getElementById('khakiPantsSize').value;
+                const khakiPantsQty = khakiPantsSize ? (parseInt(document.getElementById('khakiPantsQty').value) || 1) : 0;
+                const khakiPantsNotes = document.getElementById('khakiPantsNotes').value.trim();
+
+                const navyPantsSize = document.getElementById('navyPantsSize').value;
+                const navyPantsQty = navyPantsSize ? (parseInt(document.getElementById('navyPantsQty').value) || 1) : 0;
+                const navyPantsNotes = document.getElementById('navyPantsNotes').value.trim();
+
+                if (!jacketSize && !shirtBigSize && !khakiPantsSize && !navyPantsSize) {
+                    showToast("กรุณาเลือกไซส์ของชุด BIG อย่างน้อย 1 รายการ", "warning");
+                    return;
+                }
+
+                shirt = shirtBigSize || jacketSize;
+                shirtQty = shirtBigQty || jacketQty;
+                pants = khakiPantsSize || navyPantsSize;
+                pantsQty = khakiPantsQty || navyPantsQty;
+
+                bigDetails = {
+                    jacketSize, jacketQty, jacketNotes,
+                    shirtBigSize, shirtBigQty, shirtBigNotes,
+                    khakiPantsSize, khakiPantsQty, khakiPantsNotes,
+                    navyPantsSize, navyPantsQty, navyPantsNotes
+                };
+            } else {
+                shirt = document.getElementById('shirtSize').value;
+                shirtQty = shirt ? (parseInt(document.getElementById('shirtQty').value) || 1) : 0;
+                shirtNotes = document.getElementById('shirtNotes').value.trim();
+                pants = document.getElementById('pantsSize').value;
+                pantsQty = pants ? (parseInt(document.getElementById('pantsQty').value) || 1) : 0;
+                pantsNotes = document.getElementById('pantsNotes').value.trim();
+
+                if (!shirt && !pants) {
+                    showToast("กรุณาเลือกไซส์เสื้อ หรือไซส์กางเกง อย่างน้อย 1 รายการ", "warning");
+                    return;
+                }
+            }
+
+            const signature = hasSignature ? currentSignatureData : (id ? (customers.find(c => c.id === id)?.signature || '') : '');
+
+            const timestamp = new Date().toISOString();
+            const payload = { id, ownerUsername: currentUser.username, eventName, name, nameEn, department, phone, outfit, shirt, shirtQty, shirtNotes, pants, pantsQty, pantsNotes, bigDetails, signature, timestamp };
+
+            const isDuplicate = customers.some(item => 
+                item.id !== id && 
+                item.eventName === eventName && 
+                item.name.toLowerCase() === name.toLowerCase()
+            );
+
+            if (isDuplicate) {
+                pendingSaveData = payload;
+                document.getElementById('duplicateConfirmText').innerHTML = `พบคุณ <b>"${escapeHtml(name)}"</b> ในงาน <b>"${escapeHtml(eventName)}"</b> อยู่แล้ว คุณต้องการบันทึกซ้ำหรือไม่?`;
+                document.getElementById('duplicateConfirmModal').classList.remove('hidden');
+                return;
+            }
+
+            saveCustomerData(payload);
+        }
+
+        function saveCustomerData(data) {
+            const { id, ownerUsername, eventName, name, nameEn, department, phone, outfit, shirt, shirtQty, shirtNotes, pants, pantsQty, pantsNotes, bigDetails, signature, timestamp } = data;
+
+            if (id) {
+                const idx = customers.findIndex(item => item.id === id);
+                if (idx !== -1) customers[idx] = { ...customers[idx], ownerUsername, eventName, name, nameEn, department, phone, outfit, shirt, shirtQty, shirtNotes, pants, pantsQty, pantsNotes, bigDetails, signature, updatedAt: timestamp };
+                logActivity("UPDATE_CUSTOMER", `แก้ไขข้อมูลลูกค้า: ${name} (งาน: ${eventName})`);
+                showToast("อัปเดตข้อมูลสำเร็จ");
+            } else {
+                customers.unshift({ id: 'CUST-' + Date.now(), ownerUsername, eventName, name, nameEn, department, phone, outfit, shirt, shirtQty, shirtNotes, pants, pantsQty, pantsNotes, bigDetails, signature, createdAt: timestamp, updatedAt: timestamp });
+                logActivity("CREATE_CUSTOMER", `เพิ่มลูกค้าใหม่: ${name} (งาน: ${eventName})`);
+                showToast("บันทึกข้อมูลสำเร็จ");
+            }
+
+            saveToSharedDatabase();
+            resetForm();
+            renderData();
+        }
+
+        function confirmSaveDuplicate() {
+            if (pendingSaveData) {
+                saveCustomerData(pendingSaveData);
+                pendingSaveData = null;
+            }
+            closeDuplicateModal();
+        }
+
+        function closeDuplicateModal() {
+            pendingSaveData = null;
+            document.getElementById('duplicateConfirmModal').classList.add('hidden');
+        }
+
+        function editCustomer(id) {
+            const c = customers.find(item => item.id === id);
+            if (!c) return;
+            document.getElementById('customerId').value = c.id;
+            document.getElementById('customerName').value = c.name;
+            document.getElementById('customerNameEn').value = c.nameEn || '';
+            document.getElementById('department').value = c.department || '';
+            document.getElementById('customerPhone').value = c.phone || '';
+            
+            const outfitVal = c.outfit || '';
+            if (outfitVal === 'BIG') {
+                document.getElementById('outfitTypeSelect').value = 'BIG';
+                document.getElementById('outfitTypeOther').style.display = 'none';
+                document.getElementById('outfitTypeOther').value = '';
+                document.getElementById('bigSectionContainer').classList.remove('hidden');
+                document.getElementById('standardSectionContainer').classList.add('hidden');
+
+                const bd = c.bigDetails || {};
+                document.getElementById('jacketSize').value = bd.jacketSize || '';
+                document.getElementById('jacketQty').value = bd.jacketQty || 1;
+                document.getElementById('jacketNotes').value = bd.jacketNotes || '';
+
+                document.getElementById('shirtBigSize').value = bd.shirtBigSize || '';
+                document.getElementById('shirtBigQty').value = bd.shirtBigQty || 1;
+                document.getElementById('shirtBigNotes').value = bd.shirtBigNotes || '';
+
+                document.getElementById('khakiPantsSize').value = bd.khakiPantsSize || '';
+                document.getElementById('khakiPantsQty').value = bd.khakiPantsQty || 1;
+                document.getElementById('khakiPantsNotes').value = bd.khakiPantsNotes || '';
+
+                document.getElementById('navyPantsSize').value = bd.navyPantsSize || '';
+                document.getElementById('navyPantsQty').value = bd.navyPantsQty || 1;
+                document.getElementById('navyPantsNotes').value = bd.navyPantsNotes || '';
+            } else {
+                document.getElementById('outfitTypeSelect').value = 'อื่นๆ';
+                document.getElementById('outfitTypeOther').style.display = 'block';
+                document.getElementById('outfitTypeOther').value = outfitVal;
+                document.getElementById('bigSectionContainer').classList.add('hidden');
+                document.getElementById('standardSectionContainer').classList.remove('hidden');
+
+                document.getElementById('shirtSize').value = c.shirt || '';
+                document.getElementById('shirtQty').value = c.shirtQty || 1;
+                document.getElementById('shirtNotes').value = c.shirtNotes || '';
+                document.getElementById('pantsSize').value = c.pants || '';
+                document.getElementById('pantsQty').value = c.pantsQty || 1;
+                document.getElementById('pantsNotes').value = c.pantsNotes || '';
+            }
+            document.getElementById('outfitType').value = outfitVal;
+
+            if (c.signature) {
+                currentSignatureData = c.signature;
+                hasSignature = true;
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    document.getElementById('signaturePlaceholder').style.display = 'none';
+                };
+                img.src = currentSignatureData;
+            } else {
+                clearSignature();
+            }
+
+            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-user-pen text-amber-500"></i> แก้ไขข้อมูล`;
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> อัปเดตข้อมูล`;
+            btn.className = "w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-2xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteCustomer(id) {
+            const c = customers.find(item => item.id === id);
+            if (!c) return;
+            pendingDeleteId = id;
+            document.getElementById('deleteSingleText').innerHTML = `ต้องการลบข้อมูลของ <b>"${escapeHtml(c.name)}"</b> ใช่หรือไม่?`;
+            document.getElementById('deleteSingleModal').classList.remove('hidden');
+        }
+
+        function closeDeleteSingleModal() { 
+            pendingDeleteId = null; 
+            document.getElementById('deleteSingleModal').classList.add('hidden'); 
+        }
+
+        function executeDeleteSingle() {
+            if (!pendingDeleteId) return;
+            const c = customers.find(item => item.id === pendingDeleteId);
+            if (c) logActivity("DELETE_CUSTOMER", `ลบข้อมูลลูกค้า: ${c.name} (งาน: ${c.eventName})`);
+
+            customers = customers.filter(item => item.id !== pendingDeleteId);
+            saveToSharedDatabase();
+            renderData();
+            if (document.getElementById('customerId').value === pendingDeleteId) resetForm();
+            closeDeleteSingleModal();
+            showToast("ลบข้อมูลสำเร็จ");
+        }
+
+        function resetForm() {
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerId').value = '';
+            document.getElementById('eventName').value = currentFolder || '';
+            document.getElementById('outfitTypeSelect').value = '';
+            document.getElementById('outfitTypeOther').style.display = 'none';
+            document.getElementById('outfitTypeOther').value = '';
+            document.getElementById('outfitType').value = '';
+
+            document.getElementById('bigSectionContainer').classList.add('hidden');
+            document.getElementById('standardSectionContainer').classList.remove('hidden');
+
+            document.getElementById('shirtQty').value = '1';
+            document.getElementById('pantsQty').value = '1';
+            document.getElementById('jacketQty').value = '1';
+            document.getElementById('shirtBigQty').value = '1';
+            document.getElementById('khakiPantsQty').value = '1';
+            document.getElementById('navyPantsQty').value = '1';
+
+            clearSignature();
+
+            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-user-plus text-[#e31b1b]"></i> เพิ่มข้อมูลลูกค้าใหม่`;
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล`;
+            btn.className = "w-full bg-[#e31b1b] hover:bg-[#c21414] text-white font-medium py-3 px-4 rounded-2xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+        }
+
+        function viewSignature(sigData) {
+            if (!sigData) return;
+            document.getElementById('modalSignatureImg').src = sigData;
+            document.getElementById('viewSignatureModal').classList.remove('hidden');
+        }
+        function closeViewSignatureModal() {
+            document.getElementById('viewSignatureModal').classList.add('hidden');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '-';
+            return new Date(iso).toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderData() {
+            if (!currentFolder) return;
+            const folderCustomers = customers.filter(item => item.eventName === currentFolder);
+
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const sFilter = document.getElementById('filterShirt').value;
+            const pFilter = document.getElementById('filterPants').value;
+
+            const filtered = folderCustomers.filter(item => {
+                const matchQ = item.name.toLowerCase().includes(q) || 
+                               (item.nameEn && item.nameEn.toLowerCase().includes(q)) || 
+                               (item.department && item.department.toLowerCase().includes(q)) || 
+                               (item.phone && item.phone.toLowerCase().includes(q)) || 
+                               (item.outfit && item.outfit.toLowerCase().includes(q));
+
+                let matchS = sFilter === '';
+                let matchP = pFilter === '';
+
+                if (item.outfit === 'BIG' && item.bigDetails) {
+                    const bd = item.bigDetails;
+                    if (sFilter !== '') matchS = (bd.jacketSize === sFilter) || (bd.shirtBigSize === sFilter);
+                    if (pFilter !== '') matchP = (bd.khakiPantsSize === pFilter) || (bd.navyPantsSize === pFilter);
+                } else {
+                    if (sFilter !== '') matchS = item.shirt === sFilter;
+                    if (pFilter !== '') matchP = item.pants === pFilter;
+                }
+
+                return matchQ && matchS && matchP;
+            });
+
+            const tbody = document.getElementById('customerTableBody');
+            tbody.innerHTML = '';
+            const empty = document.getElementById('emptyState');
+
+            if (filtered.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                filtered.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-[#fdfaf6] transition-colors border-b border-[#f5eadf]';
+
+                    let shirtDisplay = '<span class="text-[#8c7365]">-</span>';
+                    let pantsDisplay = '<span class="text-[#8c7365]">-</span>';
+
+                    if (item.outfit === 'BIG' && item.bigDetails) {
+                        const bd = item.bigDetails;
+                        let sParts = [];
+                        
+                        if (bd.jacketSize && bd.jacketSize !== '' && parseInt(bd.jacketQty || 0) > 0) {
+                            const noteStr = bd.jacketNotes ? ` <span class="text-[#8c7365] font-normal">[${escapeHtml(bd.jacketNotes)}]</span>` : '';
+                            sParts.push(`<div class="text-xs text-[#2c1810]">แจ็คเก็ต: ${escapeHtml(bd.jacketSize)} (${bd.jacketQty})${noteStr}</div>`);
+                        }
+                        if (bd.shirtBigSize && bd.shirtBigSize !== '' && parseInt(bd.shirtBigQty || 0) > 0) {
+                            const noteStr = bd.shirtBigNotes ? ` <span class="text-[#8c7365] font-normal">[${escapeHtml(bd.shirtBigNotes)}]</span>` : '';
+                            sParts.push(`<div class="text-xs text-[#2c1810]">เชิ้ต: ${escapeHtml(bd.shirtBigSize)} (${bd.shirtBigQty})${noteStr}</div>`);
+                        }
+                        if (sParts.length > 0) shirtDisplay = sParts.join('');
+
+                        let pParts = [];
+                        if (bd.khakiPantsSize && bd.khakiPantsSize !== '' && parseInt(bd.khakiPantsQty || 0) > 0) {
+                            const noteStr = bd.khakiPantsNotes ? ` <span class="text-[#8c7365] font-normal">[${escapeHtml(bd.khakiPantsNotes)}]</span>` : '';
+                            pParts.push(`<div class="text-xs text-[#2c1810]">กากี: ${escapeHtml(bd.khakiPantsSize)} (${bd.khakiPantsQty})${noteStr}</div>`);
+                        }
+                        if (bd.navyPantsSize && bd.navyPantsSize !== '' && parseInt(bd.navyPantsQty || 0) > 0) {
+                            const noteStr = bd.navyPantsNotes ? ` <span class="text-[#8c7365] font-normal">[${escapeHtml(bd.navyPantsNotes)}]</span>` : '';
+                            pParts.push(`<div class="text-xs text-[#2c1810]">กรม: ${escapeHtml(bd.navyPantsSize)} (${bd.navyPantsQty})${noteStr}</div>`);
+                        }
+                        if (pParts.length > 0) pantsDisplay = pParts.join('');
+                    } else {
+                        if (item.shirt && item.shirt !== '' && parseInt(item.shirtQty || 0) > 0) {
+                            const noteStr = item.shirtNotes ? ` <span class="text-[#8c7365] font-normal">[${escapeHtml(item.shirtNotes)}]</span>` : '';
+                            shirtDisplay = `<span class="text-[#2c1810]">${escapeHtml(item.shirt)}</span> (${item.shirtQty})${noteStr}`;
+                        }
+                        if (item.pants && item.pants !== '' && parseInt(item.pantsQty || 0) > 0) {
+                            const noteStr = item.pantsNotes ? ` <span class="text-[#8c7365] font-normal">[${escapeHtml(item.pantsNotes)}]</span>` : '';
+                            pantsDisplay = `<span class="text-[#2c1810]">${escapeHtml(item.pants)}</span> (${item.pantsQty})${noteStr}`;
+                        }
+                    }
+
+                    const sigBadge = item.signature ? 
+                        `<button onclick="viewSignature('${item.signature}')" class="px-2.5 py-1 bg-[#f2fbec] text-[#3b7a1e] hover:bg-[#e2f8d4] rounded-xl text-xs font-semibold transition cursor-pointer"><i class="fa-solid fa-signature mr-1"></i> ดูลายเซ็น</button>` : 
+                        `<span class="text-[#8c7365] text-xs">-</span>`;
+
+                    tr.innerHTML = `
+                        <td class="py-4 px-4 text-xs font-semibold text-[#8c7365]">${idx + 1}</td>
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-[#2c1810] text-xs sm:text-sm">${escapeHtml(item.name)}</div>
+                            ${item.nameEn ? `<div class="text-[11px] text-[#d96b2b] font-medium">${escapeHtml(item.nameEn)}</div>` : ''}
+                            ${item.department ? `<div class="text-[11px] text-[#735c50]"><i class="fa-solid fa-sitemap text-[10px]"></i> ${escapeHtml(item.department)}</div>` : ''}
+                            ${item.phone ? `<div class="text-[11px] text-[#3b7a1e] font-medium"><i class="fa-solid fa-phone text-[10px]"></i> ${escapeHtml(item.phone)}</div>` : ''}
+                        </td>
+                        <td class="py-4 px-4"><div class="font-semibold text-[#e31b1b] text-xs">${escapeHtml(item.outfit || '-')}</div></td>
+                        <td class="py-4 px-4 text-center">${shirtDisplay}</td>
+                        <td class="py-4 px-4 text-center">${pantsDisplay}</td>
+                        <td class="py-4 px-4 text-center">${sigBadge}</td>
+                        <td class="py-4 px-4 text-right">
+                            <div class="flex items-center justify-end space-x-1.5">
+                                <button onclick="editCustomer('${item.id}')" class="p-2 text-[#8c7365] hover:text-amber-500 hover:bg-amber-50 rounded-xl transition cursor-pointer" title="แก้ไข"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteCustomer('${item.id}')" class="p-2 text-[#8c7365] hover:text-[#e31b1b] hover:bg-[#fef2f2] rounded-xl transition cursor-pointer" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById('dataCountText').innerText = `แสดง ${filtered.length} จาก ${folderCustomers.length} รายการ`;
+            updateStats(folderCustomers);
+        }
+
+        function updateStats(folderCustomers) {
+            document.getElementById('statTotalCustomers').innerText = folderCustomers.length;
+            const sCont = document.getElementById('sizeBreakdownContainer');
+            const pCont = document.getElementById('pantsBreakdownContainer');
+            sCont.innerHTML = ''; pCont.innerHTML = '';
+
+            let sCounts = {}, pCounts = {};
+            ALL_SIZES.forEach(sz => { sCounts[sz] = 0; pCounts[sz] = 0; });
+
+            if (folderCustomers.length === 0) {
+                document.getElementById('statPopularShirt').innerText = '-';
+                document.getElementById('statPopularPants').innerText = '-';
+                ALL_SIZES.forEach(sz => {
+                    sCont.innerHTML += `<div class="bg-[#fdfaf6] p-2 rounded-2xl text-center border border-[#f0e6dc]"><span class="text-[10px] font-bold text-[#735c50] block">${sz}</span><span class="text-xs font-semibold text-[#8c7365]">0</span></div>`;
+                    pCont.innerHTML += `<div class="bg-[#fdfaf6] p-2 rounded-2xl text-center border border-[#f0e6dc]"><span class="text-[10px] font-bold text-[#735c50] block">${sz}</span><span class="text-xs font-semibold text-[#8c7365]">0</span></div>`;
+                });
+                return;
+            }
+
+            folderCustomers.forEach(c => {
+                if (c.outfit === 'BIG' && c.bigDetails) {
+                    const bd = c.bigDetails;
+                    if (bd.jacketSize) {
+                        const sq = parseInt(bd.jacketQty) || 1;
+                        if (sCounts[bd.jacketSize] !== undefined) sCounts[bd.jacketSize] += sq; else sCounts['สั่งตัดพิเศษ'] += sq;
+                    }
+                    if (bd.shirtBigSize) {
+                        const sq = parseInt(bd.shirtBigQty) || 1;
+                        if (sCounts[bd.shirtBigSize] !== undefined) sCounts[bd.shirtBigSize] += sq; else sCounts['สั่งตัดพิเศษ'] += sq;
+                    }
+                    if (bd.khakiPantsSize) {
+                        const pq = parseInt(bd.khakiPantsQty) || 1;
+                        if (pCounts[bd.khakiPantsSize] !== undefined) pCounts[bd.khakiPantsSize] += pq; else pCounts['สั่งตัดพิเศษ'] += pq;
+                    }
+                    if (bd.navyPantsSize) {
+                        const pq = parseInt(bd.navyPantsQty) || 1;
+                        if (pCounts[bd.navyPantsSize] !== undefined) pCounts[bd.navyPantsSize] += pq; else pCounts['สั่งตัดพิเศษ'] += pq;
+                    }
+                } else {
+                    if (c.shirt) {
+                        const sq = parseInt(c.shirtQty) || 1;
+                        if (sCounts[c.shirt] !== undefined) sCounts[c.shirt] += sq; else sCounts['สั่งตัดพิเศษ'] += sq;
+                    }
+                    if (c.pants) {
+                        const pq = parseInt(c.pantsQty) || 1;
+                        if (pCounts[c.pants] !== undefined) pCounts[c.pants] += pq; else pCounts['สั่งตัดพิเศษ'] += pq;
+                    }
+                }
+            });
+
+            ALL_SIZES.forEach(sz => {
+                const cnt = sCounts[sz] || 0, has = cnt > 0;
+                sCont.innerHTML += `<div class="${has ? 'bg-[#fff4ec] border-[#ffad7c]/40' : 'bg-[#fdfaf6] border-[#f0e6dc]'} p-2 rounded-2xl text-center border"><span class="text-[10px] font-bold ${has ? 'text-[#d96b2b]' : 'text-[#8c7365]' } block">${sz}</span><span class="text-xs font-bold ${has ? 'text-[#2c1810]' : 'text-[#8c7365]'}">${cnt}</span></div>`;
+            });
+
+            ALL_SIZES.forEach(sz => {
+                const cnt = pCounts[sz] || 0, has = cnt > 0;
+                pCont.innerHTML += `<div class="${has ? 'bg-[#f2fbec] border-[#a2f275]/40' : 'bg-[#fdfaf6] border-[#f0e6dc]'} p-2 rounded-2xl text-center border"><span class="text-[10px] font-bold ${has ? 'text-[#3b7a1e]' : 'text-[#8c7365]'} block">${sz}</span><span class="text-xs font-bold ${has ? 'text-[#2c1810]' : 'text-[#8c7365]'}">${cnt}</span></div>`;
+            });
+
+            let topS = '-', maxS = 0;
+            for (let sz in sCounts) { if (sCounts[sz] > maxS) { maxS = sCounts[sz]; topS = sz; } }
+            let topP = '-', maxP = 0;
+            for (let sz in pCounts) { if (pCounts[sz] > maxP) { maxP = pCounts[sz]; topP = sz; } }
+
+            document.getElementById('statPopularShirt').innerText = maxS > 0 ? `${topS} (${maxS})` : '-';
+            document.getElementById('statPopularPants').innerText = maxP > 0 ? `${topP} (${maxP})` : '-';
+        }
+
+        function openExportModal() {
+            const folderCustomers = customers.filter(item => item.eventName === currentFolder);
+            if (folderCustomers.length === 0) { showToast("ไม่มีข้อมูลให้ส่งออก", "warning"); return; }
+            document.getElementById('exportFileName').value = `รายงานไซส์เสื้อผ้า_${currentFolder}_${new Date().toISOString().slice(0, 10)}`;
+            document.getElementById('exportModal').classList.remove('hidden');
+        }
+        function closeExportModal() { document.getElementById('exportModal').classList.add('hidden'); }
+
+        function confirmExportExcel(event) {
+            event.preventDefault();
+            const folderCustomers = customers.filter(item => item.eventName === currentFolder);
+            let fname = document.getElementById('exportFileName').value.trim() || 'รายงานไซส์เสื้อผ้า';
+            if (!fname.endsWith('.xlsx')) fname += '.xlsx';
+
+            logActivity("EXPORT_EXCEL", `ส่งออกรายงาน Excel งาน: ${currentFolder}`);
+
+            let sCounts = {}, pCounts = {};
+            ALL_SIZES.forEach(sz => { sCounts[sz] = 0; pCounts[sz] = 0; });
+            
+            folderCustomers.forEach(c => {
+                if (c.outfit === 'BIG' && c.bigDetails) {
+                    const bd = c.bigDetails;
+                    if (bd.jacketSize) {
+                        const sq = parseInt(bd.jacketQty) || 1;
+                        if (sCounts[bd.jacketSize] !== undefined) sCounts[bd.jacketSize] += sq; else sCounts['สั่งตัดพิเศษ'] += sq;
+                    }
+                    if (bd.shirtBigSize) {
+                        const sq = parseInt(bd.shirtBigQty) || 1;
+                        if (sCounts[bd.shirtBigSize] !== undefined) sCounts[bd.shirtBigSize] += sq; else sCounts['สั่งตัดพิเศษ'] += sq;
+                    }
+                    if (bd.khakiPantsSize) {
+                        const pq = parseInt(bd.khakiPantsQty) || 1;
+                        if (pCounts[bd.khakiPantsSize] !== undefined) pCounts[bd.khakiPantsSize] += pq; else pCounts['สั่งตัดพิเศษ'] += pq;
+                    }
+                    if (bd.navyPantsSize) {
+                        const pq = parseInt(bd.navyPantsQty) || 1;
+                        if (pCounts[bd.navyPantsSize] !== undefined) pCounts[bd.navyPantsSize] += pq; else pCounts['สั่งตัดพิเศษ'] += pq;
+                    }
+                } else {
+                    if (c.shirt) {
+                        const sq = parseInt(c.shirtQty) || 1;
+                        if (sCounts[c.shirt] !== undefined) sCounts[c.shirt] += sq; else sCounts['สั่งตัดพิเศษ'] += sq;
+                    }
+                    if (c.pants) {
+                        const pq = parseInt(c.pantsQty) || 1;
+                        if (pCounts[c.pants] !== undefined) pCounts[c.pants] += pq; else pCounts['สั่งตัดพิเศษ'] += pq;
+                    }
+                }
+            });
+
+            const summary = [
+                { "ประเภทรายการ": "=== สรุปยอดเสื้อ ===", "ไซส์": "", "จำนวนรวม": "" },
+                ...ALL_SIZES.map(sz => ({ "ประเภทรายการ": "เสื้อ", "ไซส์": sz, "จำนวนรวม": sCounts[sz] })),
+                { "ประเภทรายการ": "=== สรุปยอดกางเกง ===", "ไซส์": "", "จำนวนรวม": "" },
+                ...ALL_SIZES.map(sz => ({ "ประเภทรายการ": "กางเกง", "ไซส์": sz, "จำนวนรวม": pCounts[sz] })),
+                { "ประเภทรายการ": "รวมทั้งหมด", "ไซส์": "ลูกค้า", "จำนวนรวม": folderCustomers.length }
+            ];
+
+            const listData = folderCustomers.map((item, idx) => {
+                if (item.outfit === 'BIG' && item.bigDetails) {
+                    const bd = item.bigDetails;
+                    return {
+                        "ลำดับ": idx + 1,
+                        "ชื่องาน": item.eventName,
+                        "ชื่อ-นามสกุล (ไทย)": item.name,
+                        "ชื่อ-นามสกุล (อังกฤษ)": item.nameEn || '-',
+                        "แผนก/ฝ่าย": item.department || '-',
+                        "เบอร์โทรศัพท์": item.phone || '-',
+                        "ชุด": item.outfit,
+                        "แจ็คเก็ต": bd.jacketSize || '-',
+                        "จำนวนแจ็คเก็ต": bd.jacketSize ? (bd.jacketQty || 1) : 0,
+                        "หมายเหตุแจ็คเก็ต": bd.jacketNotes || '-',
+                        "เชิ้ต": bd.shirtBigSize || '-',
+                        "จำนวนเชิ้ต": bd.shirtBigSize ? (bd.shirtBigQty || 1) : 0,
+                        "หมายเหตุเชิ้ต": bd.shirtBigNotes || '-',
+                        "กางเกงสีกากี": bd.khakiPantsSize || '-',
+                        "จำนวนกางเกงสีกากี": bd.khakiPantsSize ? (bd.khakiPantsQty || 1) : 0,
+                        "หมายเหตุสีกากี": bd.khakiPantsNotes || '-',
+                        "กางเกงสีกรม": bd.navyPantsSize || '-',
+                        "จำนวนกางเกงสีกรม": bd.navyPantsSize ? (bd.navyPantsQty || 1) : 0,
+                        "หมายเหตุสีกรม": bd.navyPantsNotes || '-',
+                        "สถานะลายเซ็น": item.signature ? "มีลายเซ็นแล้ว" : "ไม่มี",
+                        "วันที่": formatDate(item.updatedAt || item.createdAt)
+                    };
+                } else {
+                    return {
+                        "ลำดับ": idx + 1,
+                        "ชื่องาน": item.eventName,
+                        "ชื่อ-นามสกุล (ไทย)": item.name,
+                        "ชื่อ-นามสกุล (อังกฤษ)": item.nameEn || '-',
+                        "แผนก/ฝ่าย": item.department || '-',
+                        "เบอร์โทรศัพท์": item.phone || '-',
+                        "ชุด": item.outfit,
+                        "เสื้อ": item.shirt || '-',
+                        "จำนวนเสื้อ": item.shirt ? item.shirtQty : 0,
+                        "หมายเหตุเสื้อ": item.shirtNotes || '-',
+                        "กางเกง": item.pants || '-',
+                        "จำนวนกางเกง": item.pants ? item.pantsQty : 0,
+                        "หมายเหตุกางเกง": item.pantsNotes || '-',
+                        "สถานะลายเซ็น": item.signature ? "มีลายเซ็นแล้ว" : "ไม่มี",
+                        "วันที่": formatDate(item.updatedAt || item.createdAt)
+                    };
+                }
+            });
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "สรุปยอดไซส์");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(listData), "รายการลูกค้า");
+            XLSX.writeFile(wb, fname);
+            closeExportModal();
+            showToast("ส่งออกไฟล์ Excel สำเร็จ");
+        }
+
+        function openClearAllModal() { 
+            const folderCustomers = customers.filter(item => item.eventName === currentFolder);
+            if (folderCustomers.length === 0) { showToast("ไม่มีข้อมูลในงานนี้", "warning"); return; } 
+            document.getElementById('clearAllModal').classList.remove('hidden'); 
+        }
+        function closeClearAllModal() { document.getElementById('clearAllModal').classList.add('hidden'); }
+        function executeClearAllData() {
+            logActivity("CLEAR_ALL_DATA", `ล้างข้อมูลลูกค้าทั้งหมดในงาน: ${currentFolder}`);
+            customers = customers.filter(item => item.eventName !== currentFolder);
+            saveToSharedDatabase();
+            resetForm();
+            renderData();
+            closeClearAllModal();
+            showToast("ล้างข้อมูลในงานนี้เรียบร้อย");
+        }
+
+        function loadDemoData() {
+            const now = new Date().toISOString();
+            const demo = [
+                { 
+                    id: 'CUST-1', 
+                    ownerUsername: currentUser.username, 
+                    eventName: currentFolder, 
+                    name: 'สมชาย ใจดี', 
+                    nameEn: 'Somchai Jaidee', 
+                    department: 'ฝ่ายบุคคล', 
+                    phone: '081-234-5678', 
+                    outfit: 'BIG', 
+                    shirt: 'L', 
+                    shirtQty: 2, 
+                    shirtNotes: 'ขอแขนยาว', 
+                    pants: 'XL', 
+                    pantsQty: 1, 
+                    pantsNotes: 'เอวยืด', 
+                    bigDetails: { 
+                        jacketSize: 'XL', 
+                        jacketQty: 1, 
+                        jacketNotes: 'ขอไซส์ใหญ่พิเศษ', 
+                        shirtBigSize: 'L', 
+                        shirtBigQty: 2, 
+                        shirtBigNotes: '', 
+                        khakiPantsSize: 'XL', 
+                        khakiPantsQty: 1, 
+                        khakiPantsNotes: '', 
+                        navyPantsSize: '', 
+                        navyPantsQty: 0, 
+                        navyPantsNotes: '' 
+                    }, 
+                    signature: '', 
+                    createdAt: now, 
+                    updatedAt: now 
+                },
+                { 
+                    id: 'CUST-2', 
+                    ownerUsername: currentUser.username, 
+                    eventName: currentFolder, 
+                    name: 'วิภาดา วงศ์สว่าง', 
+                    nameEn: 'Wipada Wongsawang', 
+                    department: 'บัญชี', 
+                    phone: '089-876-5432', 
+                    outfit: 'ยูนิฟอร์มบริษัท', 
+                    shirt: 'M', 
+                    shirtQty: 1, 
+                    shirtNotes: 'เข้ารูป', 
+                    pants: '', 
+                    pantsQty: 0, 
+                    pantsNotes: '', 
+                    bigDetails: null, 
+                    signature: '', 
+                    createdAt: now, 
+                    updatedAt: now 
+                }
+            ];
+            customers = [...demo, ...customers];
+            saveToSharedDatabase();
+            renderData();
+            logActivity("LOAD_DEMO_DATA", `โหลดข้อมูลตัวอย่างในงาน: ${currentFolder}`);
+            showToast("เพิ่มข้อมูลตัวอย่างสำเร็จ");
+        }
+
+        function openGuideModal() { document.getElementById('guideModal').classList.remove('hidden'); }
+        function closeGuideModal() { document.getElementById('guideModal').classList.add('hidden'); }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = msg;
+            document.getElementById('toastIcon').className = type === "success" ? "fa-solid fa-circle-check text-[#83e645] text-base" : "fa-solid fa-triangle-exclamation text-amber-400 text-base";
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

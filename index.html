@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบศูนย์รวมการจัดการระบบบริหารชุดยูนิฟอร์ม | Portal Dashboard</title>
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            background-color: #fdfaf6;
+            color: #2c1810;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .portal-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f0e6dc;
+            background: #ffffff;
+            will-change: transform;
+        }
+        .portal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px -8px rgba(227, 27, 27, 0.1);
+            border-color: #ffad7c;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-[#ffad7c] selection:text-white">
+
+    <!-- Top Navbar -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-[#f5eadf] sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#e31b1b] to-[#ffad7c] text-white flex items-center justify-center shadow-md text-xl">
+                    <i class="fa-solid fa-shirt"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-[#2c1810] tracking-tight">ระบบบริหารชุดยูนิฟอร์ม</h1>
+                    <p class="text-xs text-[#8c7365] font-normal">Uniform Management Operations Portal</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5" id="authNavSection"></div>
+        </div>
+    </header>
+
+    <!-- Main Launcher Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 flex-grow w-full flex flex-col justify-center">
+        <div class="text-center max-w-2xl mx-auto mb-12 space-y-3">
+            <span class="inline-flex items-center gap-2 px-4 py-1.5 bg-[#ffefcb] text-[#8c5200] text-xs font-bold rounded-full border border-[#ffad7c]/40 shadow-xs">
+                <i class="fa-solid fa-layer-group"></i> แผงควบคุมหลัก (Main Dashboard)
+            </span>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-[#2c1810] tracking-tight">เลือกส่วนงานที่คุณต้องการจัดการ</h2>
+            <p class="text-xs sm:text-sm text-[#735c50] leading-relaxed" id="welcomeSubText">
+                ศูนย์รวมการจัดการข้อมูลหน้าผ้า บันทึกไซส์เสื้อผ้า และควบคุมสต็อกสินค้าสำหรับระบบยูนิฟอร์ม
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            <!-- ระบบบันทึกข้อมูลหน้าผ้า -->
+            <a href="#" onclick="navigateToSystem(event, 'Measure-the-fabric-width.html', 'ระบบบันทึกข้อมูลหน้าผ้า')" class="portal-card group rounded-3xl p-6 sm:p-8 flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-2.5 h-full bg-[#83e645]"></div>
+                <div class="space-y-5">
+                    <div class="w-14 h-14 rounded-2xl bg-[#f2fbec] text-[#3b7a1e] flex items-center justify-center text-2xl transition-colors group-hover:bg-[#83e645] group-hover:text-white shadow-xs">
+                        <i class="fa-solid fa-ruler-combined"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-lg sm:text-xl font-bold text-[#2c1810] group-hover:text-[#3b7a1e] transition-colors">ระบบบันทึกข้อมูลหน้าผ้า</h3>
+                        <p class="text-xs sm:text-sm text-[#735c50] leading-relaxed">ตรวจวัดหน้าผ้า บันทึกรหัสผ้า เบอร์ม้วน พร้อมแนบรูปถ่ายหลักฐาน และส่งออกรายงาน</p>
+                    </div>
+                </div>
+                <div class="pt-5 mt-6 border-t border-[#f5eadf] flex items-center justify-between text-xs font-bold text-[#3b7a1e]">
+                    <span>เปิดใช้งานระบบ</span> <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1.5"></i>
+                </div>
+            </a>
+
+            <!-- ระบบจัดการไซส์เสื้อผ้า -->
+            <a href="#" onclick="navigateToSystem(event, 'Measure-clothing-size.html', 'ระบบจัดการไซส์เสื้อผ้า')" class="portal-card group rounded-3xl p-6 sm:p-8 flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-2.5 h-full bg-[#ffad7c]"></div>
+                <div class="space-y-5">
+                    <div class="w-14 h-14 rounded-2xl bg-[#fff4ec] text-[#d96b2b] flex items-center justify-center text-2xl transition-colors group-hover:bg-[#ffad7c] group-hover:text-white shadow-xs">
+                        <i class="fa-solid fa-shirt"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-lg sm:text-xl font-bold text-[#2c1810] group-hover:text-[#d96b2b] transition-colors">ระบบจัดการไซส์เสื้อผ้า</h3>
+                        <p class="text-xs sm:text-sm text-[#735c50] leading-relaxed">บันทึกไซส์เสื้อและกางเกงของลูกค้าแยกตามโครงการ พร้อมระบบเซ็นลายเซ็นดิจิทัล</p>
+                    </div>
+                </div>
+                <div class="pt-5 mt-6 border-t border-[#f5eadf] flex items-center justify-between text-xs font-bold text-[#d96b2b]">
+                    <span>เปิดใช้งานระบบ</span> <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1.5"></i>
+                </div>
+            </a>
+
+            <!-- ระบบจัดการสต็อกเสื้อผ้า -->
+            <a href="#" onclick="navigateToSystem(event, 'Stock.html', 'ระบบจัดการสต็อกเสื้อผ้า')" class="portal-card group rounded-3xl p-6 sm:p-8 flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-2.5 h-full bg-[#e31b1b]"></div>
+                <div class="space-y-5">
+                    <div class="w-14 h-14 rounded-2xl bg-[#fef2f2] text-[#e31b1b] flex items-center justify-center text-2xl transition-colors group-hover:bg-[#e31b1b] group-hover:text-white shadow-xs">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-lg sm:text-xl font-bold text-[#2c1810] group-hover:text-[#e31b1b] transition-colors">ระบบจัดการสต็อกเสื้อผ้า</h3>
+                        <p class="text-xs sm:text-sm text-[#735c50] leading-relaxed">ควบคุมสต็อกสินค้า เช็กยอดคงเหลือแต่ละไซส์ บันทึกรับเข้าและเบิกออกเรียลไทม์</p>
+                    </div>
+                </div>
+                <div class="pt-5 mt-6 border-t border-[#f5eadf] flex items-center justify-between text-xs font-bold text-[#e31b1b]">
+                    <span>เปิดใช้งานระบบ</span> <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1.5"></i>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <!-- Auth Modal (Login / Register) -->
+    <div id="authModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-[#f0e6dc]">
+            <div id="loginFormContainer">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-[#fff4ec] text-[#d96b2b] rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl shadow-inner"><i class="fa-solid fa-lock"></i></div>
+                    <h3 class="text-xl font-bold text-[#2c1810]">เข้าสู่ระบบ</h3>
+                    <p class="text-xs text-[#8c7365]">กรุณาเข้าสู่ระบบเพื่อใช้งานระบบบริหารชุดยูนิฟอร์ม</p>
+                </div>
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                        <input type="text" id="loginUsername" required placeholder="กรอก Username" class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-xs text-[#2c1810]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#735c50] mb-1">รหัสผ่าน (Password)</label>
+                        <input type="password" id="loginPassword" required placeholder="กรอก Password" class="w-full px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-xs text-[#2c1810]">
+                    </div>
+                    <button type="submit" class="w-full bg-[#e31b1b] hover:bg-[#c21414] text-white font-semibold py-3 rounded-xl shadow-md transition text-xs cursor-pointer">เข้าสู่ระบบ</button>
+                </form>
+                <div class="mt-4 text-center text-xs text-[#8c7365]">ยังไม่มีบัญชีผู้ใช้? <button type="button" onclick="switchAuthTab('register')" class="text-[#d96b2b] font-bold hover:underline cursor-pointer">สมัครสมาชิก</button></div>
+            </div>
+
+            <div id="registerFormContainer" class="hidden">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-[#f2fbec] text-[#3b7a1e] rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl shadow-inner"><i class="fa-solid fa-user-plus"></i></div>
+                    <h3 class="text-xl font-bold text-[#2c1810]">สมัครสมาชิกใหม่</h3>
+                    <p class="text-xs text-[#8c7365]">สร้างบัญชีผู้ใช้ใหม่สำหรับเข้าใช้งาน</p>
+                </div>
+                <form onsubmit="handleRegister(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่อ-นามสกุล</label>
+                        <input type="text" id="regFullname" required placeholder="เช่น สมชาย ใจดี" class="w-full px-3.5 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b7a1e] text-xs text-[#2c1810]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                        <input type="text" id="regUsername" required placeholder="ตั้ง Username" class="w-full px-3.5 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b7a1e] text-xs text-[#2c1810]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#735c50] mb-1">รหัสผ่าน (Password)</label>
+                        <input type="password" id="regPassword" required placeholder="ตั้ง Password" class="w-full px-3.5 py-2 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b7a1e] text-xs text-[#2c1810]">
+                    </div>
+                    <button type="submit" class="w-full bg-[#3b7a1e] hover:bg-[#2d5f17] text-white font-semibold py-2.5 rounded-xl shadow-md transition text-xs mt-2 cursor-pointer">ยืนยันการสมัครสมาชิก</button>
+                </form>
+                <div class="mt-4 text-center text-xs text-[#8c7365]">มีบัญชีผู้ใช้อยู่แล้ว? <button type="button" onclick="switchAuthTab('login')" class="text-[#d96b2b] font-bold hover:underline cursor-pointer">เข้าสู่ระบบ</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile & Change Password Modal -->
+    <div id="editProfileModal" class="fixed inset-0 bg-[#2c1810]/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-[#f0e6dc]">
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-[#fff4ec] text-[#d96b2b] rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl shadow-inner"><i class="fa-solid fa-user-pen"></i></div>
+                <h3 class="text-xl font-bold text-[#2c1810]">แก้ไขโปรไฟล์และรหัสผ่าน</h3>
+                <p class="text-xs text-[#8c7365]">อัปเดตชื่อ-นามสกุล หรือเปลี่ยนรหัสผ่านของคุณ</p>
+            </div>
+            <form onsubmit="handleUpdateProfile(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่อผู้ใช้งาน (Username) - ไม่สามารถเปลี่ยนได้</label>
+                    <input type="text" id="profileUsername" disabled class="w-full px-3.5 py-2 bg-slate-100 border border-[#f0e6dc] rounded-xl text-xs text-slate-500 font-mono cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#735c50] mb-1">ชื่อ-นามสกุล (Fullname)</label>
+                    <input type="text" id="profileFullname" required placeholder="กรอกชื่อ-นามสกุลใหม่" class="w-full px-3.5 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-xs text-[#2c1810]">
+                </div>
+                <hr class="border-[#f5eadf] my-2">
+                <div>
+                    <label class="block text-xs font-semibold text-[#735c50] mb-1">รหัสผ่านปัจจุบัน (สำหรับยืนยัน)</label>
+                    <input type="password" id="profileCurrentPassword" required placeholder="กรอกรหัสผ่านปัจจุบัน" class="w-full px-3.5 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-xs text-[#2c1810]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#735c50] mb-1">รหัสผ่านใหม่ (ปล่อยว่างไว้ถ้าไม่ต้องการเปลี่ยน)</label>
+                    <input type="password" id="profileNewPassword" placeholder="กรอกรหัสผ่านใหม่ (ถ้ามี)" class="w-full px-3.5 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffad7c] text-xs text-[#2c1810]">
+                </div>
+                <div class="flex gap-2 pt-3">
+                    <button type="button" onclick="closeEditProfileModal()" class="flex-1 px-4 py-2.5 bg-[#fdfaf6] border border-[#f0e6dc] text-[#735c50] text-xs font-semibold rounded-xl cursor-pointer">ยกเลิก</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-[#e31b1b] hover:bg-[#c21414] text-white text-xs font-semibold rounded-xl shadow-md transition text-xs cursor-pointer">บันทึกการแก้ไข</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-[#2c1810] text-white px-5 py-3 rounded-2xl shadow-xl border border-[#4a2e23] flex items-center space-x-3 text-xs">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-[#83e645] text-base"></i>
+            <span id="toastMessage" class="font-medium">แจ้งเตือน</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 border-t border-[#f5eadf] py-6 px-4 text-center text-xs text-[#8c7365]">
+        <div class="max-w-7xl mx-auto">
+            <p>ระบบบริหารชุดยูนิฟอร์ม &copy; 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        const SHARED_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxATMv5Q5CbEDs8t0g5AcII1GDuNWPYu6BmH3DudFeGfuKACnn8lP7IzY1BUuh5YrN-MQ/exec';
+        const SHARED_SESSION_KEY = 'UNIFORM_SHARED_ACTIVE_USER_SESSION';
+        let pendingTargetUrl = '';
+        let pendingSystemName = '';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!getActiveSession()) {
+                openAuthModal('login');
+            }
+            checkAuth();
+        });
+
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            if (/android/i.test(ua)) return 'Android Mobile';
+            if (/iPad|iPhone|iPod/.test(ua)) return 'iOS iPhone/iPad';
+            if (/Windows/i.test(ua)) return 'Windows PC';
+            if (/Mac/i.test(ua)) return 'MacOS';
+            return 'Web Browser / Desktop';
+        }
+
+        async function sendActivityLog(user, logType, detail) {
+            try {
+                const url = `${SHARED_GAS_API_URL}?payload=${encodeURIComponent(JSON.stringify({
+                    action: 'logActivity',
+                    user: user,
+                    logType: logType,
+                    detail: detail,
+                    platform: getDeviceInfo()
+                }))}`;
+                navigator.sendBeacon ? navigator.sendBeacon(url) : fetch(url, { keepalive: true }).catch(() => {});
+            } catch (e) {}
+        }
+
+        // ฟังก์ชันดึงข้อมูลผู้ใช้จาก Google Sheet สดๆ แบบรวดเร็ว
+        async function fetchUsersFromSheet() {
+            try {
+                const res = await fetch(`${SHARED_GAS_API_URL}?payload=${encodeURIComponent(JSON.stringify({action: 'getUsers'}))}`);
+                const data = await res.json();
+                if (data && data.status === 'success' && Array.isArray(data.users)) {
+                    return data.users;
+                }
+            } catch (e) {}
+            return [];
+        }
+
+        function getActiveSession() {
+            return JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY) || 'null');
+        }
+
+        function checkAuth() {
+            const session = getActiveSession();
+            const nav = document.getElementById('authNavSection');
+            const subText = document.getElementById('welcomeSubText');
+
+            if (session) {
+                subText.innerHTML = `ยินดีต้อนรับคุณ <b class="text-[#2c1810]">${session.fullname || session.username}</b> สามารถเลือกส่วนงานด้านล่างเพื่อเริ่มจัดการได้ทันที`;
+                nav.innerHTML = `
+                    <div onclick="openEditProfileModal()" class="flex items-center gap-2 bg-[#fdfaf6] border border-[#f0e6dc] px-3.5 py-2 rounded-2xl cursor-pointer hover:border-[#ffad7c] transition shadow-xs group">
+                        <div class="w-8 h-8 rounded-full bg-[#e31b1b] text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-user"></i></div>
+                        <div class="text-left hidden sm:block">
+                            <div class="text-xs font-bold text-[#2c1810] truncate max-w-[120px]">${session.fullname || session.username}</div>
+                            <div class="text-[10px] text-[#8c7365]">แก้ไขโปรไฟล์</div>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="bg-[#fef2f2] hover:bg-[#fee2e2] text-[#e31b1b] px-3.5 py-2 rounded-xl text-xs font-semibold transition border border-[#fca5a5]/30 cursor-pointer">
+                        <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">ออก</span>
+                    </button>
+                `;
+            } else {
+                subText.innerHTML = 'ศูนย์รวมการจัดการข้อมูลหน้าผ้า บันทึกไซส์เสื้อผ้า และควบคุมสต็อกสินค้าสำหรับระบบยูนิฟอร์ม';
+                nav.innerHTML = `
+                    <button onclick="openAuthModal('login')" class="bg-[#e31b1b] hover:bg-[#c21414] text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ / สมัครสมาชิก
+                    </button>
+                `;
+            }
+        }
+
+        function openEditProfileModal() {
+            const session = getActiveSession();
+            if (!session) return openAuthModal('login');
+            document.getElementById('profileUsername').value = session.username;
+            document.getElementById('profileFullname').value = session.fullname || '';
+            document.getElementById('profileCurrentPassword').value = '';
+            document.getElementById('profileNewPassword').value = '';
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            const session = getActiveSession();
+            if (!session) return;
+
+            const currentPass = document.getElementById('profileCurrentPassword').value;
+            const newFullname = document.getElementById('profileFullname').value.trim();
+            const newPass = document.getElementById('profileNewPassword').value;
+
+            if (currentPass !== session.password) {
+                showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง", "warning");
+                return;
+            }
+
+            let users = await fetchUsersFromSheet();
+            const idx = users.findIndex(u => u.username === session.username);
+            if (idx === -1) {
+                showToast("ไม่พบข้อมูลผู้ใช้งานในระบบ", "error");
+                return;
+            }
+
+            users[idx].fullname = newFullname;
+            if (newPass) users[idx].password = newPass;
+
+            session.fullname = newFullname;
+            if (newPass) session.password = newPass;
+            sessionStorage.setItem(SHARED_SESSION_KEY, JSON.stringify(session));
+
+            try {
+                const payload = { action: 'saveUsers', users: users };
+                await fetch(`${SHARED_GAS_API_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`);
+            } catch (err) {}
+
+            sendActivityLog(`${newFullname} (${session.username})`, 'UPDATE_PROFILE', 'อัปเดตข้อมูลสำเร็จ');
+            closeEditProfileModal();
+            checkAuth();
+            showToast("อัปเดตโปรไฟล์สำเร็จ");
+        }
+
+        function navigateToSystem(e, targetUrl, systemName) {
+            e.preventDefault();
+            const session = getActiveSession();
+            if (session) {
+                sendActivityLog(`${session.fullname} (${session.username})`, 'OPEN_SYSTEM', `เปิดระบบ: ${systemName}`);
+                window.location.href = targetUrl;
+            } else {
+                pendingTargetUrl = targetUrl;
+                pendingSystemName = systemName;
+                showToast("กรุณาเข้าสู่ระบบก่อน", "warning");
+                openAuthModal('login');
+            }
+        }
+
+        function openAuthModal(tab = 'login') {
+            document.getElementById('loginFormContainer').classList.toggle('hidden', tab === 'register');
+            document.getElementById('registerFormContainer').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            openAuthModal(tab);
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const fullname = document.getElementById('regFullname').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            showToast("กำลังตรวจสอบข้อมูล...", "success");
+            let users = await fetchUsersFromSheet();
+
+            if (users.some(u => u.username === username)) {
+                showToast("ชื่อผู้ใช้งานนี้มีอยู่แล้ว", "warning");
+                return;
+            }
+
+            users.push({ fullname, username, password, createdAt: new Date().toISOString() });
+
+            try {
+                const payload = { action: 'saveUsers', users: users };
+                await fetch(`${SHARED_GAS_API_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`);
+            } catch (err) {}
+
+            sendActivityLog(`${fullname} (${username})`, 'USER_REGISTER', 'สมัครสมาชิกสำเร็จ');
+            showToast("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
+            document.getElementById('regFullname').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            openAuthModal('login');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            showToast("กำลังตรวจสอบข้อมูล...", "success");
+            let users = await fetchUsersFromSheet();
+
+            const found = users.find(u => u.username === username && u.password === password);
+            if (found) {
+                sessionStorage.setItem(SHARED_SESSION_KEY, JSON.stringify(found));
+                sendActivityLog(`${found.fullname} (${found.username})`, 'USER_LOGIN', 'เข้าสู่ระบบสำเร็จ');
+                document.getElementById('authModal').classList.add('hidden');
+                checkAuth();
+                showToast(`ยินดีต้อนรับคุณ ${found.fullname}`);
+                
+                if (pendingTargetUrl) {
+                    const target = pendingTargetUrl;
+                    pendingTargetUrl = '';
+                    pendingSystemName = '';
+                    window.location.href = target;
+                }
+            } else {
+                sendActivityLog(username, 'LOGIN_FAILED', 'รหัสผ่านไม่ถูกต้องหรือไม่พบใน Sheet');
+                showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", "warning");
+            }
+        }
+
+        async function handleLogout() {
+            const session = getActiveSession();
+            if (session) {
+                sendActivityLog(`${session.fullname} (${session.username})`, 'USER_LOGOUT', 'ออกจากระบบ');
+            }
+            sessionStorage.removeItem(SHARED_SESSION_KEY);
+            checkAuth();
+            showToast("ออกจากระบบแล้ว");
+            openAuthModal('login');
+        }
+
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = msg;
+            document.getElementById('toastIcon').className = type === "success" ? "fa-solid fa-circle-check text-[#83e645] text-base" : "fa-solid fa-triangle-exclamation text-amber-400 text-base";
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
